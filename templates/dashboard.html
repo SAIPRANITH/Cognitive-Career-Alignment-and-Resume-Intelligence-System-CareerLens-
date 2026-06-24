@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Career Lens{% endblock %}
+
+{% block body %}
+<div class="container pt-5 mt-5 pb-5" style="min-height: 80vh;">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25 fade-in-up">
+        <div class="stagger-1">
+            <h2 class="fw-bold mb-1"><span class="text-gradient neon-text">Career Hub</span></h2>
+            <p class="text-muted mb-0">Select a tool to optimize your professional profile.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2 stagger-2">
+            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill">
+                <span class="pulse-indicator bg-success rounded-circle me-2" style="width: 8px; height: 8px; display: inline-block;"></span>
+                ML Engine Active
+            </span>
+        </div>
+    </div>
+
+    <!-- Flash messages with slide-down animation -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show glass-card border-{{ 'danger' if category == 'error' else 'success' }} slide-down" role="alert">
+                    <i class="bi bi-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Resume Upload Card -->
+    <div class="row justify-content-center mt-4">
+        <div class="col-lg-12 stagger-2">
+            <div class="card glass-card border-0 rounded-4 tool-card shadow-lg mb-5 position-relative overflow-hidden">
+                <div class="scan-line"></div>
+                <div class="card-header bg-transparent border-0 pt-5 px-5 pb-0 text-center">
+                    <div class="icon-box bg-primary bg-opacity-25 rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center bounce-in" style="width: 80px; height: 80px;">
+                        <i class="bi bi-file-earmark-check fs-1 text-primary-glow"></i>
+                    </div>
+                    <h3 class="fw-bold mb-2">Resume Scorer & Classifier</h3>
+                    <p class="text-muted">Upload your resume to instantly receive an ATS score, role prediction, and AI-driven career insights.</p>
+                </div>
+                <div class="card-body p-5">
+                    <form action="{{ url_for('upload_resume') }}" method="post" enctype="multipart/form-data" id="uploadForm">
+                        <div class="upload-zone border-2 border-dashed rounded-4 d-flex flex-column align-items-center justify-content-center p-5 text-center position-relative overflow-hidden" id="dropZone" style="min-height: 220px;">
+                            <input type="file" name="resume" id="fileInput" class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer z-3" accept=".pdf,.docx" required>
+                            <i class="bi bi-cloud-arrow-up fs-1 text-muted mb-3 float-element"></i>
+                            <h5 class="fw-semibold">Drag & Drop Resume Here</h5>
+                            <p class="text-muted small mb-4">Supports PDF and DOCX files up to 16MB</p>
+                            <span class="badge bg-primary bg-opacity-10 text-primary-glow border border-primary rounded-pill px-4 py-2 badge-hover">
+                                <i class="bi bi-folder2-open me-1"></i> Browse Files
+                            </span>
+                        </div>
+                        
+                        <div id="fileInfo" class="mt-4 p-3 rounded-3 bg-secondary bg-opacity-10 border border-secondary border-opacity-25 d-none">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-3">
+                                    <i class="bi bi-file-earmark-text text-primary fs-3"></i>
+                                    <div>
+                                        <h6 class="mb-0" id="fileName">filename.pdf</h6>
+                                        <small class="text-muted" id="fileSize">2.4 MB</small>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-close" id="clearFile" aria-label="Remove file"></button>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-gradient py-3 rounded-3 btn-glow btn-ripple position-relative overflow-hidden shadow-lg" id="submitBtn" disabled>
+                                <span class="position-relative z-1 fw-bold letter-spacing-1">
+                                    <i class="bi bi-magic me-2"></i>Analyze Resume
+                                </span>
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Loading Overlay -->
+                    <div id="loadingOverlay" class="position-absolute top-0 start-0 w-100 h-100 bg-body bg-opacity-75 d-flex flex-column align-items-center justify-content-center rounded-4 d-none z-3" style="backdrop-filter: blur(8px);">
+                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+                        <h5 class="mt-3 fw-bold text-gradient pulse">Extracting Features & Analyzing...</h5>
+                        <div class="d-flex gap-3 mt-3">
+                            <div class="shimmer-loading rounded-pill" style="width: 80px; height: 8px;"></div>
+                            <div class="shimmer-loading rounded-pill" style="width: 60px; height: 8px;"></div>
+                            <div class="shimmer-loading rounded-pill" style="width: 100px; height: 8px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Intelligence Tools Grid -->
+            <h4 class="fw-bold mb-4 mt-5 stagger-3">
+                <i class="bi bi-grid-3x3-gap me-2 text-primary-glow"></i>
+                <span class="text-gradient">Intelligence Tools</span>
+            </h4>
+            <div class="row g-4">
+                <div class="col-md-3 stagger-3">
+                    <a href="{{ url_for('role_checker_tool') }}" class="text-decoration-none">
+                        <div class="card glass-card h-100 p-4 hover-lift hover-glow icon-hover-spin">
+                            <i class="bi bi-bullseye fs-2 text-primary-glow mb-3"></i>
+                            <h5 class="fw-bold text-body">Role Eligibility</h5>
+                            <p class="text-muted small mb-2">Check your resume against a specific target role.</p>
+                            <span class="text-primary-glow small fw-bold mt-auto">Explore <i class="bi bi-arrow-right"></i></span>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3 stagger-4">
+                    <a href="{{ url_for('ai_feedback') }}" class="text-decoration-none">
+                        <div class="card glass-card h-100 p-4 hover-lift hover-glow icon-hover-spin">
+                            <i class="bi bi-chat-right-text fs-2 text-warning mb-3"></i>
+                            <h5 class="fw-bold text-body">AI Feedback</h5>
+                            <p class="text-muted small mb-2">Get conversational AI advice on your career.</p>
+                            <span class="text-warning small fw-bold mt-auto">Explore <i class="bi bi-arrow-right"></i></span>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3 stagger-5">
+                    <a href="{{ url_for('cover_letter') }}" class="text-decoration-none">
+                        <div class="card glass-card h-100 p-4 hover-lift hover-glow icon-hover-spin">
+                            <i class="bi bi-envelope-paper fs-2 text-success mb-3"></i>
+                            <h5 class="fw-bold text-body">Cover Letter</h5>
+                            <p class="text-muted small mb-2">Generate a tailored, professional cover letter.</p>
+                            <span class="text-success small fw-bold mt-auto">Explore <i class="bi bi-arrow-right"></i></span>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-3 stagger-6">
+                    <a href="{{ url_for('engine_details') }}" class="text-decoration-none">
+                        <div class="card glass-card h-100 p-4 hover-lift hover-glow icon-hover-spin">
+                            <i class="bi bi-cpu fs-2 text-info mb-3"></i>
+                            <h5 class="fw-bold text-body">Engine Core</h5>
+                            <p class="text-muted small mb-2">View the ML metrics and data pipelines.</p>
+                            <span class="text-info small fw-bold mt-auto">Explore <i class="bi bi-arrow-right"></i></span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+{% endblock %}

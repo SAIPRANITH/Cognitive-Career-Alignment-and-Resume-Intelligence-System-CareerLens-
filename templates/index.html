@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Career Lens | Next-Gen Career Guidance{% endblock %}
+
+{% block body %}
+<!-- Hero Section -->
+<section class="hero-section min-vh-100 d-flex align-items-center position-relative overflow-hidden">
+    <!-- Animated background orbs -->
+    <div style="position: absolute; top: 10%; left: 10%; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle, rgba(0,229,255,0.08), transparent 70%); animation: float 8s ease-in-out infinite; pointer-events: none;"></div>
+    <div style="position: absolute; bottom: 20%; right: 15%; width: 250px; height: 250px; border-radius: 50%; background: radial-gradient(circle, rgba(59,130,246,0.06), transparent 70%); animation: float 10s ease-in-out infinite reverse; pointer-events: none;"></div>
+    <div style="position: absolute; top: 50%; left: 50%; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(16,185,129,0.05), transparent 70%); animation: float 12s ease-in-out infinite 2s; pointer-events: none;"></div>
+    
+    <div class="container position-relative z-1">
+        <div class="row align-items-center text-center text-lg-start pt-5">
+            <div class="col-lg-6 fade-in-up">
+                <div class="badge glass-card mb-3 px-3 py-2 text-primary-glow border border-info border-opacity-25" style="background: rgba(0,229,255,0.08);">
+                    <i class="bi bi-sparkles me-2"></i> Powered by Scikit-Learn & Logistic Regression
+                </div>
+                <h1 class="display-4 fw-bold mb-4 lh-sm">
+                    <span class="text-gradient neon-text">Decode Your Career</span> <br> With Artificial Intelligence
+                </h1>
+                <p class="lead opacity-75 mb-5 pe-lg-5 text-body">
+                    Upload your resume. Our ML pipeline extracts your skills, analyzes your experience, and predicts your optimal job role with pinpoint accuracy.
+                </p>
+                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-lg btn-gradient px-5 rounded-pill btn-glow btn-ripple">
+                        <i class="bi bi-rocket-takeoff me-2"></i> Launch Dashboard
+                    </a>
+                    <a href="#ml-engine" class="btn btn-lg btn-outline-primary px-4 rounded-pill btn-ripple">
+                        <i class="bi bi-cpu me-2"></i> How It Works
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-lg-6 mt-5 mt-lg-0 stagger-2">
+                <div class="hero-visual position-relative">
+                    <div class="glass-card p-4 rounded-4">
+                        <div class="scan-line"></div>
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="bg-gradient-primary rounded-circle p-2 me-3" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-person-bounding-box text-white fs-4"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0 fw-bold">Candidate Analysis</h5>
+                                <small class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Processing Complete</small>
+                            </div>
+                        </div>
+                        
+                        <h6 class="text-muted mb-3 text-uppercase letter-spacing-1 small">Top Role Predictions</h6>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Data Scientist</span>
+                                <span class="fw-bold text-primary-glow">89%</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-gradient-primary" style="width: 89%;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>ML Engineer</span>
+                                <span class="fw-bold text-info">76%</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" style="width: 76%; background: #3b82f6;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2 mt-4 flex-wrap">
+                            <span class="badge bg-secondary bg-opacity-25 border border-secondary rounded-pill px-3 py-2 badge-hover">Python</span>
+                            <span class="badge bg-secondary bg-opacity-25 border border-secondary rounded-pill px-3 py-2 badge-hover">TensorFlow</span>
+                            <span class="badge bg-secondary bg-opacity-25 border border-secondary rounded-pill px-3 py-2 badge-hover">Pandas</span>
+                            <span class="badge bg-secondary bg-opacity-25 border border-secondary rounded-pill px-3 py-2 badge-hover">+8 more</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Floating badge -->
+                    <div class="float-element card glass-card p-3 rounded-4 shadow-lg position-absolute" style="top: -15px; right: -15px; border: 1px solid rgba(16,185,129,0.3);">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                            <span class="fw-semibold text-body small">962 Resumes Trained</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Strip -->
+<section class="py-5 glass-section">
+    <div class="container">
+        <div class="row text-center g-4">
+            <div class="col-6 col-md-3 stagger-1">
+                <h2 class="display-5 fw-bold text-gradient counter" data-target="{{ stats.resumes_analyzed }}">0</h2>
+                <span class="text-muted text-uppercase letter-spacing-1 small">Resumes Trained</span>
+            </div>
+            <div class="col-6 col-md-3 stagger-2">
+                <h2 class="display-5 fw-bold text-gradient counter" data-target="{{ stats.accuracy }}">0</h2>
+                <span class="text-muted text-uppercase letter-spacing-1 small">Model Accuracy (%)</span>
+            </div>
+            <div class="col-6 col-md-3 stagger-3">
+                <h2 class="display-5 fw-bold text-gradient counter" data-target="{{ stats.job_categories }}">0</h2>
+                <span class="text-muted text-uppercase letter-spacing-1 small">Job Categories</span>
+            </div>
+            <div class="col-6 col-md-3 stagger-4">
+                <h2 class="display-5 fw-bold text-gradient counter" data-target="{{ stats.ml_models }}">0</h2>
+                <span class="text-muted text-uppercase letter-spacing-1 small">ML Models Compared</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features / ML Concepts Section -->
+<section id="ml-engine" class="py-5">
+    <div class="container">
+        <div class="text-center mb-5 fade-in-up">
+            <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-3 py-2 rounded-pill mb-3">
+                <i class="bi bi-gear-wide-connected me-1"></i> Core Technology
+            </span>
+            <h2 class="display-6 fw-bold mt-2">End-to-End ML Pipeline</h2>
+            <p class="text-muted mx-auto" style="max-width: 600px;">
+                Our application implements all key data science and machine learning laboratory concepts.
+            </p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4 stagger-1">
+                <div class="glass-card h-100 p-4 rounded-4 hover-lift">
+                    <div class="bg-gradient-primary text-white rounded-3 mb-4 d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="bi bi-funnel fs-3"></i>
+                    </div>
+                    <h4 class="fw-bold">Data Preprocessing</h4>
+                    <p class="text-muted mb-0">Null value handling, duplicate removal, outlier clipping, and data scaling using Pandas and NumPy.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4 stagger-2">
+                <div class="glass-card h-100 p-4 rounded-4 hover-lift">
+                    <div class="bg-gradient-info text-white rounded-3 mb-4 d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="bi bi-braces fs-3"></i>
+                    </div>
+                    <h4 class="fw-bold">Feature Encoding</h4>
+                    <p class="text-muted mb-0">Implementation of Label Encoding, Ordinal Encoding, and TF-IDF Vectorization for text features.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4 stagger-3">
+                <div class="glass-card h-100 p-4 rounded-4 hover-lift">
+                    <div class="bg-gradient-success text-white rounded-3 mb-4 d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="bi bi-diagram-2 fs-3"></i>
+                    </div>
+                    <h4 class="fw-bold">Classification Models</h4>
+                    <p class="text-muted mb-0">Multi-class prediction using Logistic Regression with TF-IDF vectorization and cross-validation evaluation.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4 stagger-4">
+                <div class="glass-card h-100 p-4 rounded-4 hover-lift">
+                    <div class="bg-gradient-warning text-white rounded-3 mb-4 d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                        <i class="bi bi-pie-chart fs-3"></i>
+                    </div>
+                    <h4 class="fw-bold">K-Means Clustering</h4>
+                    <p class="text-muted mb-0">Unsupervised learning to group resumes into Beginner, Intermediate, and Advanced categories.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4 stagger-5">
+                <div class="glass-card h-100 p-4 rounded-4 hover-lift">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-3 mb-4" style="width: 60px; height: 60px; background: var(--accent-danger);">
+                        <i class="bi bi-file-earmark-text fs-3 text-white"></i>
+                    </div>
+                    <h4 class="fw-bold">NLP Extraction</h4>
+                    <p class="text-muted mb-0">Keyword-based extraction of skills, education, and experience from raw PDF/DOCX text.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4 stagger-6">
+                <div class="glass-card h-100 p-4 rounded-4 hover-lift">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-3 mb-4" style="width: 60px; height: 60px; background: #a855f7;">
+                        <i class="bi bi-graph-up fs-3 text-white"></i>
+                    </div>
+                    <h4 class="fw-bold">Data Visualization</h4>
+                    <p class="text-muted mb-0">Comprehensive exploratory data analysis using Matplotlib, Seaborn, and interactive Chart.js visualizations.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- CTA -->
+        <div class="text-center mt-5 pt-4 fade-in-up">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-lg btn-gradient px-5 rounded-pill btn-glow btn-ripple">
+                <i class="bi bi-upload me-2"></i> Upload Your Resume Now
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="glass-section py-4 mt-5 border-top border-secondary border-opacity-25">
+    <div class="container text-center">
+        <div class="d-flex align-items-center justify-content-center gap-2 mb-3">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Career Lens Logo" width="30" height="30" class="rounded-circle shadow-sm">
+            <span class="fw-bold fs-5">Career Lens</span>
+        </div>
+    </div>
+</footer>
+{% endblock %}

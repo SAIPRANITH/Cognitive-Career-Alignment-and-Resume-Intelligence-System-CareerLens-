@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}Role Checker | Career Lens{% endblock %}
+
+{% block body %}
+<div class="container pt-5 mt-5 pb-5" style="min-height: 80vh;">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25 fade-in-up">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-bullseye text-warning me-2"></i>
+                <span class="typewriter-text">Target Role Checker</span>
+            </h2>
+            <p class="text-muted mb-0">Check how well your current skills align with a specific job category, and discover missing skills.</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary rounded-pill px-3 btn-ripple">
+            <i class="bi bi-arrow-left me-1"></i> Dashboard
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <!-- Input Panel -->
+        <div class="col-lg-5 stagger-1">
+            <div class="card glass-card border-0 rounded-4 h-100 gradient-border">
+                <div class="card-header bg-transparent pt-4 px-4 pb-2 border-0">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-sliders me-2 text-warning"></i>Input Parameters</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form id="roleCheckForm">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small text-uppercase letter-spacing-1">Target Role</label>
+                            <select class="form-select border-secondary border-opacity-50 text-body bg-transparent" id="targetRoleStr" required>
+                                <option value="" selected disabled style="background:#1a1d2e; color:#aaa;">Select desired role...</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat }}" style="background:#1a1d2e; color:#e0e0e0;">{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted small text-uppercase letter-spacing-1">Your Current Skills</label>
+                            <textarea class="form-control border-secondary border-opacity-50 text-body bg-transparent" id="currentSkillsStr" rows="4" placeholder="Python, Java, React, Docker..." required></textarea>
+                            <small class="text-muted mt-1 d-block"><i class="bi bi-info-circle me-1"></i>Separate skills with commas</small>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-6">
+                                <label class="form-label text-muted small text-uppercase letter-spacing-1">Experience (Yrs)</label>
+                                <input type="number" class="form-control border-secondary border-opacity-50 text-body bg-transparent" id="currentExpStr" value="0" min="0" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label text-muted small text-uppercase letter-spacing-1">Education</label>
+                                <select class="form-select border-secondary border-opacity-50 text-body bg-transparent" id="currentEduStr">
+                                    <option value="High School" style="background:#1a1d2e;">High School</option>
+                                    <option value="Bachelor's" selected style="background:#1a1d2e;">Bachelor's</option>
+                                    <option value="Master's" style="background:#1a1d2e;">Master's</option>
+                                    <option value="PhD" style="background:#1a1d2e;">PhD</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-warning w-100 py-3 rounded-3 fw-bold shadow-sm btn-ripple" style="color: #000;">
+                            <i class="bi bi-search me-1"></i> Check Alignment
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="col-lg-7 stagger-2">
+            <div class="card glass-card border-0 rounded-4 h-100">
+                <div class="card-header bg-transparent pt-4 px-4 pb-2 border-0">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-graph-up me-2 text-primary-glow"></i>Analysis Results</h5>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Results (hidden until form submit) -->
+                    <div id="checkResultContainer" class="d-none">
+                        <!-- Match Score Ring -->
+                        <div class="text-center mb-4 pb-4 border-bottom border-secondary border-opacity-25">
+                            <h6 class="text-muted text-uppercase letter-spacing-1 mb-3">Match Probability</h6>
+                            <div class="position-relative d-inline-block">
+                                <svg viewBox="0 0 36 36" class="circular-chart" style="width: 160px; height: 160px; filter: drop-shadow(0 0 10px rgba(255,193,7,0.3));">
+                                    <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
+                                    <path class="circle" id="probCircle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#ffc107" stroke-width="3" stroke-linecap="round" style="transition: stroke-dasharray 1.5s cubic-bezier(0.16, 1, 0.3, 1);"/>
+                                    <text x="18" y="20.35" class="percentage" id="probText" fill="#fff" font-size="8px" text-anchor="middle" font-weight="bold">0%</text>
+                                </svg>
+                            </div>
+                            <h5 class="mt-3 fw-bold" id="probRoleText">Target Role</h5>
+                        </div>
+
+                        <!-- Skills Match -->
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-success mb-3"><i class="bi bi-check-circle me-2"></i>Matched Skills</h6>
+                                <div class="d-flex flex-wrap gap-2" id="matchedSkillsList"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-danger mb-3"><i class="bi bi-x-circle me-2"></i>Missing Skills</h6>
+                                <div class="d-flex flex-wrap gap-2" id="missingSkillsList"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Top Matching Roles -->
+                        <div class="mt-4 pt-4 border-top border-secondary border-opacity-25 d-none" id="topRolesSection">
+                            <h6 class="fw-bold text-primary-glow mb-3"><i class="bi bi-stars me-2"></i>Top Matching Roles</h6>
+                            <div class="d-flex flex-wrap gap-2" id="topRolesList"></div>
+                        </div>
+                        
+                        <!-- Action Plan -->
+                        <div class="mt-4 pt-4 border-top border-secondary border-opacity-25">
+                            <h6 class="fw-bold text-info mb-3"><i class="bi bi-lightbulb me-2"></i>Action Plan</h6>
+                            <ul class="list-group list-group-flush bg-transparent" id="suggestionsList"></ul>
+                        </div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="checkEmptyState" class="d-flex flex-column align-items-center justify-content-center h-100 text-muted opacity-50 py-5">
+                        <div class="float-element mb-3">
+                            <i class="bi bi-bullseye" style="font-size: 3rem;"></i>
+                        </div>
+                        <p class="fw-semibold">Fill out the form to check your role alignment.</p>
+                        <small class="text-muted">Your skills will be matched against the required skill set</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('roleCheckForm');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const role = document.getElementById('targetRoleStr').value;
+        const skills = document.getElementById('currentSkillsStr').value;
+        const experience = document.getElementById('currentExpStr').value;
+        const education = document.getElementById('currentEduStr').value;
+
+        if (!role) {
+            alert('Please select a target role.');
+            return;
+        }
+
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const origBtnHTML = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Analyzing...';
+
+        const emptyState = document.getElementById('checkEmptyState');
+        const resultContainer = document.getElementById('checkResultContainer');
+        if (emptyState) emptyState.classList.add('d-none');
+        resultContainer.classList.add('d-none');
+
+        try {
+            const resp = await fetch('/check-role', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role, skills, experience, education })
+            });
+
+            if (!resp.ok) {
+                const errData = await resp.json().catch(() => ({}));
+                throw new Error(errData.error || `Server error (${resp.status})`);
+            }
+
+            const data = await resp.json();
+
+            // Show result container with animation
+            resultContainer.classList.remove('d-none');
+            resultContainer.style.animation = 'fadeInUp 0.6s ease-out';
+
+            // Animate SVG probability circle
+            const probability = data.probability || 0;
+            const probCircle = document.getElementById('probCircle');
+            const dashValue = (probability / 100) * 100;
+            
+            // Color code based on probability
+            let strokeColor = '#ef4444'; // red
+            if (probability >= 70) strokeColor = '#10b981'; // green
+            else if (probability >= 40) strokeColor = '#f59e0b'; // amber
+            probCircle.setAttribute('stroke', strokeColor);
+            
+            // Delayed animation for smooth effect
+            setTimeout(() => {
+                probCircle.setAttribute('stroke-dasharray', `${dashValue}, 100`);
+            }, 100);
+
+            // Animate counter
+            const probTextEl = document.getElementById('probText');
+            let counter = 0;
+            const target = Math.round(probability);
+            const increment = target / 40;
+            const counterInterval = setInterval(() => {
+                counter += increment;
+                if (counter >= target) {
+                    counter = target;
+                    clearInterval(counterInterval);
+                }
+                probTextEl.textContent = `${Math.round(counter)}%`;
+            }, 30);
+
+            document.getElementById('probRoleText').textContent = data.role || role;
+
+            // Populate matched skills with staggered animation
+            const matchedList = document.getElementById('matchedSkillsList');
+            matchedList.innerHTML = '';
+            if (data.matched_skills && data.matched_skills.length > 0) {
+                data.matched_skills.forEach((skill, i) => {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill badge-hover';
+                    badge.innerHTML = `<i class="bi bi-check-circle me-1"></i>${skill}`;
+                    badge.style.animation = `fadeInUp 0.4s ease-out ${i * 0.05}s both`;
+                    matchedList.appendChild(badge);
+                });
+            } else {
+                matchedList.innerHTML = '<span class="text-muted small">No matched skills found.</span>';
+            }
+
+            // Populate missing skills with staggered animation
+            const missingList = document.getElementById('missingSkillsList');
+            missingList.innerHTML = '';
+            if (data.missing_skills && data.missing_skills.length > 0) {
+                data.missing_skills.forEach((skill, i) => {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill badge-hover';
+                    badge.innerHTML = `${skill} <i class="bi bi-box-arrow-up-right ms-1"></i>`;
+                    badge.style.cursor = 'pointer';
+                    badge.style.animation = `fadeInUp 0.4s ease-out ${i * 0.05}s both`;
+                    badge.addEventListener('click', () => {
+                        window.open(`https://www.google.com/search?q=learn+${encodeURIComponent(skill)}`, '_blank');
+                    });
+                    missingList.appendChild(badge);
+                });
+            } else {
+                missingList.innerHTML = '<span class="text-muted small">No missing skills — great match!</span>';
+            }
+
+            // Top roles section
+            const topRolesSection = document.getElementById('topRolesSection');
+            const topRolesList = document.getElementById('topRolesList');
+            if (data.top_roles && data.top_roles.length > 0) {
+                topRolesSection.classList.remove('d-none');
+                topRolesSection.style.animation = 'fadeInUp 0.5s ease-out 0.3s both';
+                topRolesList.innerHTML = '';
+                data.top_roles.forEach((r, i) => {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-primary bg-opacity-25 text-info border border-info border-opacity-25 px-3 py-2 rounded-pill badge-hover';
+                    badge.textContent = `${r.role} (${Math.round(r.probability)}%)`;
+                    badge.style.animation = `fadeInUp 0.4s ease-out ${i * 0.08}s both`;
+                    topRolesList.appendChild(badge);
+                });
+            } else {
+                topRolesSection.classList.add('d-none');
+            }
+
+            // Populate suggestions with staggered animation
+            const suggestionsList = document.getElementById('suggestionsList');
+            suggestionsList.innerHTML = '';
+            if (data.suggestions && data.suggestions.length > 0) {
+                data.suggestions.forEach((suggestion, i) => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item bg-transparent text-body border-secondary border-opacity-25 ps-0';
+                    li.innerHTML = `<i class="bi bi-arrow-right-circle text-info me-2"></i>${suggestion}`;
+                    li.style.animation = `fadeInUp 0.4s ease-out ${(i + 3) * 0.1}s both`;
+                    suggestionsList.appendChild(li);
+                });
+            }
+
+        } catch (err) {
+            alert('Error: ' + err.message);
+            console.error('Role check error:', err);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = origBtnHTML;
+        }
+    });
+});
+</script>
+{% endblock %}

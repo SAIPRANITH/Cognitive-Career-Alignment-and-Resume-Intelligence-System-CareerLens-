@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+static/uploads/*
+!static/uploads/.gitkeep
+static/charts/*
+!static/charts/.gitkeep
+.idea/
+.vscode/
+*.log
+parsed_resume.json
+ai_resume_dataset.csv
+dev_scripts/
+*.docx
