@@ -1,55 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // ══════════════════════════════════════
-    //  THEME TOGGLE
-    // ══════════════════════════════════════
-    const themeToggleBtn = document.getElementById('themeToggle');
-    const htmlElement = document.documentElement;
-    
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-        htmlElement.setAttribute('data-theme', savedTheme);
-        htmlElement.setAttribute('data-bs-theme', savedTheme);
-        updateThemeIcon(savedTheme);
-    }
-    
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', () => {
-            let currentTheme = htmlElement.getAttribute('data-theme');
-            let targetTheme = currentTheme === 'light' ? 'dark' : 'light';
-            
-            htmlElement.setAttribute('data-theme', targetTheme);
-            htmlElement.setAttribute('data-bs-theme', targetTheme);
-            localStorage.setItem('theme', targetTheme);
-            updateThemeIcon(targetTheme);
-        });
-    }
-    
-    function updateThemeIcon(theme) {
-        if (!themeToggleBtn) return;
-        const icon = themeToggleBtn.querySelector('i');
-        if (theme === 'light') {
-            icon.classList.remove('bi-moon-stars');
-            icon.classList.add('bi-sun');
-        } else {
-            icon.classList.remove('bi-sun');
-            icon.classList.add('bi-moon-stars');
-        }
-    }
-
-    // ══════════════════════════════════════
-    //  SIDEBAR TOGGLE
-    // ══════════════════════════════════════
-    const sidebarToggle = document.getElementById('toggleSidebar');
-    const sidebar = document.getElementById('sidebar');
-    
-    if (sidebarToggle && sidebar) {
-        sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('show');
-        });
-    }
-
-    // ══════════════════════════════════════
     //  FILE UPLOAD DRAG & DROP
     // ══════════════════════════════════════
     const fileInput = document.getElementById('fileInput');
@@ -306,36 +257,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     }
 
-    // ══════════════════════════════════════
-    //  COUNTER ANIMATION (Animate numbers)
-    // ══════════════════════════════════════
-    const counterObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const el = entry.target;
-                const target = parseFloat(el.dataset.target);
-                if (isNaN(target)) return;
-                const duration = 1500;
-                const start = performance.now();
-                const isFloat = target % 1 !== 0;
-                
-                function animate(now) {
-                    const elapsed = now - start;
-                    const progress = Math.min(elapsed / duration, 1);
-                    const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
-                    const current = eased * target;
-                    el.textContent = isFloat ? current.toFixed(1) : Math.round(current);
-                    if (progress < 1) requestAnimationFrame(animate);
-                }
-                requestAnimationFrame(animate);
-                counterObserver.unobserve(el);
-            }
-        });
-    }, { threshold: 0.3 });
 
-    document.querySelectorAll('.counter[data-target]').forEach(el => {
-        counterObserver.observe(el);
-    });
 
     // ══════════════════════════════════════
     //  SCROLL-TRIGGERED FADE-IN ANIMATIONS

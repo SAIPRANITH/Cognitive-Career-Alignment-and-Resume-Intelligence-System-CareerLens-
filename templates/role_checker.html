@@ -2,10 +2,13 @@
 
 {% block title %}Role Checker | Career Lens{% endblock %}
 
+{% block head %}
+{% endblock %}
+
 {% block body %}
 <div class="container pt-5 mt-5 pb-5" style="min-height: 80vh;">
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25 fade-in-up">
+    <div class="mb-4 pb-3 border-bottom border-secondary border-opacity-25 fade-in-up">
         <div>
             <h2 class="fw-bold mb-1">
                 <i class="bi bi-bullseye text-warning me-2"></i>
@@ -13,9 +16,6 @@
             </h2>
             <p class="text-muted mb-0">Check how well your current skills align with a specific job category, and discover missing skills.</p>
         </div>
-        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary rounded-pill px-3 btn-ripple">
-            <i class="bi bi-arrow-left me-1"></i> Dashboard
-        </a>
     </div>
 
     <div class="row g-4">
@@ -26,43 +26,83 @@
                     <h5 class="fw-bold mb-0"><i class="bi bi-sliders me-2 text-warning"></i>Input Parameters</h5>
                 </div>
                 <div class="card-body p-4">
-                    <form id="roleCheckForm">
-                        <div class="mb-3">
-                            <label class="form-label text-muted small text-uppercase letter-spacing-1">Target Role</label>
-                            <select class="form-select border-secondary border-opacity-50 text-body bg-transparent" id="targetRoleStr" required>
-                                <option value="" selected disabled style="background:#1a1d2e; color:#aaa;">Select desired role...</option>
-                                {% for cat in categories %}
-                                <option value="{{ cat }}" style="background:#1a1d2e; color:#e0e0e0;">{{ cat }}</option>
-                                {% endfor %}
-                            </select>
+                    <div class="mb-4">
+                        <ul class="nav nav-pills nav-fill gap-2 p-1 bg-dark bg-opacity-25 rounded-pill" id="inputTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active rounded-pill text-white fw-bold" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-pane" type="button" role="tab"><i class="bi bi-cloud-arrow-up me-1"></i> Upload</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link rounded-pill text-white fw-bold" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual-pane" type="button" role="tab"><i class="bi bi-keyboard me-1"></i> Manual</button>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tab-content" id="inputTabsContent">
+                        <!-- File Upload Tab -->
+                        <div class="tab-pane fade show active" id="upload-pane" role="tabpanel" tabindex="0">
+                            <form id="roleCheckFileForm">
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small text-uppercase letter-spacing-1">Target Role</label>
+                                    <select class="form-select border-secondary border-opacity-50 text-body bg-transparent" id="targetRoleFile" required>
+                                        <option value="" selected disabled style="background:#1a1d2e; color:#aaa;">Select desired role...</option>
+                                        {% for cat in categories %}
+                                        <option value="{{ cat }}" style="background:#1a1d2e; color:#e0e0e0;">{{ cat }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label text-muted small text-uppercase letter-spacing-1">Upload Resume</label>
+                                    <input type="file" class="form-control border-secondary border-opacity-50 text-body bg-transparent py-2" id="resumeFile" accept=".pdf,.docx" required>
+                                    <small class="text-muted mt-1 d-block"><i class="bi bi-file-earmark-pdf me-1"></i>Supports PDF and DOCX</small>
+                                </div>
+                                <button type="submit" id="btnCheckFile" class="btn btn-warning w-100 py-3 rounded-3 fw-bold shadow-sm btn-ripple" style="color: #000;">
+                                    <i class="bi bi-search me-1"></i> Scan Resume & Check
+                                </button>
+                            </form>
                         </div>
                         
-                        <div class="mb-3">
-                            <label class="form-label text-muted small text-uppercase letter-spacing-1">Your Current Skills</label>
-                            <textarea class="form-control border-secondary border-opacity-50 text-body bg-transparent" id="currentSkillsStr" rows="4" placeholder="Python, Java, React, Docker..." required></textarea>
-                            <small class="text-muted mt-1 d-block"><i class="bi bi-info-circle me-1"></i>Separate skills with commas</small>
-                        </div>
+                        <!-- Manual Entry Tab -->
+                        <div class="tab-pane fade" id="manual-pane" role="tabpanel" tabindex="0">
+                            <form id="roleCheckForm">
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small text-uppercase letter-spacing-1">Target Role</label>
+                                    <select class="form-select border-secondary border-opacity-50 text-body bg-transparent" id="targetRoleStr" required>
+                                        <option value="" selected disabled style="background:#1a1d2e; color:#aaa;">Select desired role...</option>
+                                        {% for cat in categories %}
+                                        <option value="{{ cat }}" style="background:#1a1d2e; color:#e0e0e0;">{{ cat }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small text-uppercase letter-spacing-1">Your Current Skills</label>
+                                    <textarea class="form-control border-secondary border-opacity-50 text-body bg-transparent" id="currentSkillsStr" rows="4" placeholder="Python, Java, React, Docker..." required></textarea>
+                                    <small class="text-muted mt-1 d-block"><i class="bi bi-info-circle me-1"></i>Separate skills with commas</small>
+                                </div>
 
-                        <div class="row mb-4">
-                            <div class="col-6">
-                                <label class="form-label text-muted small text-uppercase letter-spacing-1">Experience (Yrs)</label>
-                                <input type="number" class="form-control border-secondary border-opacity-50 text-body bg-transparent" id="currentExpStr" value="0" min="0" required>
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label text-muted small text-uppercase letter-spacing-1">Education</label>
-                                <select class="form-select border-secondary border-opacity-50 text-body bg-transparent" id="currentEduStr">
-                                    <option value="High School" style="background:#1a1d2e;">High School</option>
-                                    <option value="Bachelor's" selected style="background:#1a1d2e;">Bachelor's</option>
-                                    <option value="Master's" style="background:#1a1d2e;">Master's</option>
-                                    <option value="PhD" style="background:#1a1d2e;">PhD</option>
-                                </select>
-                            </div>
+                                <div class="row mb-4">
+                                    <div class="col-6">
+                                        <label class="form-label text-muted small text-uppercase letter-spacing-1">Experience (Yrs)</label>
+                                        <input type="number" class="form-control border-secondary border-opacity-50 text-body bg-transparent" id="currentExpStr" value="0" min="0" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label text-muted small text-uppercase letter-spacing-1">Education</label>
+                                        <select class="form-select border-secondary border-opacity-50 text-body bg-transparent" id="currentEduStr">
+                                            <option value="10th" style="background:#1a1d2e;">10th</option>
+                                            <option value="Intermediate" style="background:#1a1d2e;">Intermediate</option>
+                                            <option value="BTech" style="background:#1a1d2e;" selected>BTech</option>
+                                            <option value="MTech" style="background:#1a1d2e;">MTech</option>
+                                            <option value="PhD" style="background:#1a1d2e;">PhD</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" id="btnCheckManual" class="btn btn-warning w-100 py-3 rounded-3 fw-bold shadow-sm btn-ripple" style="color: #000;">
+                                    <i class="bi bi-search me-1"></i> Check Alignment
+                                </button>
+                            </form>
                         </div>
-                        
-                        <button type="submit" class="btn btn-warning w-100 py-3 rounded-3 fw-bold shadow-sm btn-ripple" style="color: #000;">
-                            <i class="bi bi-search me-1"></i> Check Alignment
-                        </button>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -101,9 +141,9 @@
                             </div>
                         </div>
                         
-                        <!-- Top Matching Roles -->
+                        <!-- Alternative Career Paths -->
                         <div class="mt-4 pt-4 border-top border-secondary border-opacity-25 d-none" id="topRolesSection">
-                            <h6 class="fw-bold text-primary-glow mb-3"><i class="bi bi-stars me-2"></i>Top Matching Roles</h6>
+                            <h6 class="fw-bold text-primary-glow mb-3"><i class="bi bi-stars me-2"></i>Alternative Career Paths</h6>
                             <div class="d-flex flex-wrap gap-2" id="topRolesList"></div>
                         </div>
                         
@@ -132,22 +172,148 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('roleCheckForm');
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    const manualForm = document.getElementById('roleCheckForm');
+    const fileForm = document.getElementById('roleCheckFileForm');
 
+    function renderAnalysisResults(data, role) {
+        const resultContainer = document.getElementById('checkResultContainer');
+        
+        // Show result container with animation
+        resultContainer.classList.remove('d-none');
+        resultContainer.style.animation = 'fadeInUp 0.6s ease-out';
+
+        // Animate SVG probability circle
+        const probability = data.probability || 0;
+        const probCircle = document.getElementById('probCircle');
+        const dashValue = (probability / 100) * 100;
+        
+        // Color code based on probability
+        let strokeColor = '#ef4444'; // red
+        if (probability >= 70) strokeColor = '#10b981'; // green
+        else if (probability >= 40) strokeColor = '#f59e0b'; // amber
+        probCircle.setAttribute('stroke', strokeColor);
+        
+        // Delayed animation for smooth effect
+        setTimeout(() => {
+            probCircle.setAttribute('stroke-dasharray', `${dashValue}, 100`);
+        }, 100);
+
+        // Animate counter
+        const probTextEl = document.getElementById('probText');
+        let counter = 0;
+        const target = Math.round(probability);
+        if (target > 0) {
+            const increment = target / 40;
+            const counterInterval = setInterval(() => {
+                counter += increment;
+                if (counter >= target) {
+                    counter = target;
+                    clearInterval(counterInterval);
+                }
+                probTextEl.textContent = `${Math.round(counter)}%`;
+            }, 30);
+        } else {
+            probTextEl.textContent = '0%';
+        }
+
+        document.getElementById('probRoleText').textContent = data.role || role;
+
+        // Populate matched skills with staggered animation
+        const matchedList = document.getElementById('matchedSkillsList');
+        matchedList.innerHTML = '';
+        if (data.matched_skills && data.matched_skills.length > 0) {
+            data.matched_skills.forEach((skill, i) => {
+                const badge = document.createElement('span');
+                badge.className = 'animated-pill pill-matched';
+                badge.innerHTML = `<i class="bi bi-check2-circle text-success me-2"></i>${skill}`;
+                badge.style.animation = `fadeInUp 0.4s ease-out ${i * 0.05}s both`;
+                matchedList.appendChild(badge);
+            });
+        } else {
+            matchedList.innerHTML = '<span class="text-muted small">No matched skills found.</span>';
+        }
+
+        // Populate missing skills with staggered animation
+        const missingList = document.getElementById('missingSkillsList');
+        missingList.innerHTML = '';
+        if (data.missing_skills && data.missing_skills.length > 0) {
+            data.missing_skills.forEach((skill, i) => {
+                const badge = document.createElement('a');
+                badge.href = `https://www.coursera.org/search?query=${encodeURIComponent(skill)}`;
+                badge.target = '_blank';
+                badge.className = 'animated-pill pill-missing';
+                badge.innerHTML = `<i class="bi bi-play-circle text-danger me-2"></i>${skill} <i class="bi bi-box-arrow-up-right ms-1 opacity-50" style="font-size: 0.7em;"></i>`;
+                badge.style.animation = `fadeInUp 0.4s ease-out ${i * 0.05}s both`;
+                missingList.appendChild(badge);
+            });
+        } else {
+            missingList.innerHTML = '<span class="text-muted small">No missing skills — great match!</span>';
+        }
+
+        // Alternative roles section
+        const topRolesSection = document.getElementById('topRolesSection');
+        const topRolesList = document.getElementById('topRolesList');
+        if (data.top_roles && data.top_roles.length > 0) {
+            topRolesSection.classList.remove('d-none');
+            topRolesSection.style.animation = 'fadeInUp 0.5s ease-out 0.3s both';
+            topRolesList.innerHTML = '';
+            data.top_roles.forEach((r, i) => {
+                const badge = document.createElement('button');
+                badge.className = 'role-tab-btn mt-2';
+                
+                // Format role name (e.g. Database -> Database Administrator)
+                let displayRole = r.role;
+                if (displayRole === 'Database') displayRole = 'Database Administrator';
+                if (displayRole === 'Web Designing') displayRole = 'Web Designer';
+                if (displayRole === 'Testing') displayRole = 'QA / Testing';
+                
+                badge.innerHTML = `${displayRole} <span class="badge rounded-pill ms-2">${Math.round(r.probability)}%</span>`;
+                badge.style.animation = `fadeInUp 0.4s ease-out ${i * 0.08}s both`;
+                badge.style.cursor = 'pointer';
+                badge.title = `Click to re-evaluate for ${displayRole}`;
+                
+                badge.onclick = () => {
+                    // Update the active tab's input and resubmit
+                    const manualPane = document.getElementById('manual-pane');
+                    if (manualPane && manualPane.classList.contains('active')) {
+                        document.getElementById('targetRoleStr').value = r.role;
+                        document.getElementById('roleCheckForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                    } else {
+                        document.getElementById('targetRoleFile').value = r.role;
+                        document.getElementById('roleCheckFileForm').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                    }
+                };
+                
+                topRolesList.appendChild(badge);
+            });
+        } else {
+            topRolesSection.classList.add('d-none');
+        }
+
+        // Populate suggestions with staggered animation
+        const suggestionsList = document.getElementById('suggestionsList');
+        suggestionsList.innerHTML = '';
+        if (data.suggestions && data.suggestions.length > 0) {
+            data.suggestions.forEach((suggestion, i) => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item bg-transparent text-body border-secondary border-opacity-25 ps-0';
+                li.innerHTML = `<i class="bi bi-arrow-right-circle text-info me-2"></i>${suggestion}`;
+                li.style.animation = `fadeInUp 0.4s ease-out ${(i + 3) * 0.1}s both`;
+                suggestionsList.appendChild(li);
+            });
+        }
+    }
+
+    manualForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
         const role = document.getElementById('targetRoleStr').value;
         const skills = document.getElementById('currentSkillsStr').value;
         const experience = document.getElementById('currentExpStr').value;
         const education = document.getElementById('currentEduStr').value;
 
-        if (!role) {
-            alert('Please select a target role.');
-            return;
-        }
+        if (!role) { alert('Please select a target role.'); return; }
 
-        // Show loading state
-        const submitBtn = form.querySelector('button[type="submit"]');
+        const submitBtn = document.getElementById('btnCheckManual');
         const origBtnHTML = submitBtn.innerHTML;
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Analyzing...';
@@ -164,114 +330,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ role, skills, experience, education })
             });
 
-            if (!resp.ok) {
-                const errData = await resp.json().catch(() => ({}));
-                throw new Error(errData.error || `Server error (${resp.status})`);
-            }
-
+            if (!resp.ok) throw new Error(`Server error (${resp.status})`);
             const data = await resp.json();
+            renderAnalysisResults(data, role);
+        } catch (err) {
+            alert('Error: ' + err.message);
+            console.error('Role check error:', err);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = origBtnHTML;
+        }
+    });
 
-            // Show result container with animation
-            resultContainer.classList.remove('d-none');
-            resultContainer.style.animation = 'fadeInUp 0.6s ease-out';
+    fileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const role = document.getElementById('targetRoleFile').value;
+        const fileInput = document.getElementById('resumeFile');
 
-            // Animate SVG probability circle
-            const probability = data.probability || 0;
-            const probCircle = document.getElementById('probCircle');
-            const dashValue = (probability / 100) * 100;
-            
-            // Color code based on probability
-            let strokeColor = '#ef4444'; // red
-            if (probability >= 70) strokeColor = '#10b981'; // green
-            else if (probability >= 40) strokeColor = '#f59e0b'; // amber
-            probCircle.setAttribute('stroke', strokeColor);
-            
-            // Delayed animation for smooth effect
-            setTimeout(() => {
-                probCircle.setAttribute('stroke-dasharray', `${dashValue}, 100`);
-            }, 100);
+        if (!role) { alert('Please select a target role.'); return; }
+        if (!fileInput.files.length) { alert('Please upload a resume file.'); return; }
 
-            // Animate counter
-            const probTextEl = document.getElementById('probText');
-            let counter = 0;
-            const target = Math.round(probability);
-            const increment = target / 40;
-            const counterInterval = setInterval(() => {
-                counter += increment;
-                if (counter >= target) {
-                    counter = target;
-                    clearInterval(counterInterval);
-                }
-                probTextEl.textContent = `${Math.round(counter)}%`;
-            }, 30);
+        const submitBtn = document.getElementById('btnCheckFile');
+        const origBtnHTML = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Scanning...';
 
-            document.getElementById('probRoleText').textContent = data.role || role;
+        const emptyState = document.getElementById('checkEmptyState');
+        const resultContainer = document.getElementById('checkResultContainer');
+        if (emptyState) emptyState.classList.add('d-none');
+        resultContainer.classList.add('d-none');
 
-            // Populate matched skills with staggered animation
-            const matchedList = document.getElementById('matchedSkillsList');
-            matchedList.innerHTML = '';
-            if (data.matched_skills && data.matched_skills.length > 0) {
-                data.matched_skills.forEach((skill, i) => {
-                    const badge = document.createElement('span');
-                    badge.className = 'badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill badge-hover';
-                    badge.innerHTML = `<i class="bi bi-check-circle me-1"></i>${skill}`;
-                    badge.style.animation = `fadeInUp 0.4s ease-out ${i * 0.05}s both`;
-                    matchedList.appendChild(badge);
-                });
-            } else {
-                matchedList.innerHTML = '<span class="text-muted small">No matched skills found.</span>';
-            }
+        const formData = new FormData();
+        formData.append('role', role);
+        formData.append('resume', fileInput.files[0]);
 
-            // Populate missing skills with staggered animation
-            const missingList = document.getElementById('missingSkillsList');
-            missingList.innerHTML = '';
-            if (data.missing_skills && data.missing_skills.length > 0) {
-                data.missing_skills.forEach((skill, i) => {
-                    const badge = document.createElement('span');
-                    badge.className = 'badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill badge-hover';
-                    badge.innerHTML = `${skill} <i class="bi bi-box-arrow-up-right ms-1"></i>`;
-                    badge.style.cursor = 'pointer';
-                    badge.style.animation = `fadeInUp 0.4s ease-out ${i * 0.05}s both`;
-                    badge.addEventListener('click', () => {
-                        window.open(`https://www.google.com/search?q=learn+${encodeURIComponent(skill)}`, '_blank');
-                    });
-                    missingList.appendChild(badge);
-                });
-            } else {
-                missingList.innerHTML = '<span class="text-muted small">No missing skills — great match!</span>';
-            }
+        try {
+            const resp = await fetch('/api/check-role-file', {
+                method: 'POST',
+                body: formData
+            });
 
-            // Top roles section
-            const topRolesSection = document.getElementById('topRolesSection');
-            const topRolesList = document.getElementById('topRolesList');
-            if (data.top_roles && data.top_roles.length > 0) {
-                topRolesSection.classList.remove('d-none');
-                topRolesSection.style.animation = 'fadeInUp 0.5s ease-out 0.3s both';
-                topRolesList.innerHTML = '';
-                data.top_roles.forEach((r, i) => {
-                    const badge = document.createElement('span');
-                    badge.className = 'badge bg-primary bg-opacity-25 text-info border border-info border-opacity-25 px-3 py-2 rounded-pill badge-hover';
-                    badge.textContent = `${r.role} (${Math.round(r.probability)}%)`;
-                    badge.style.animation = `fadeInUp 0.4s ease-out ${i * 0.08}s both`;
-                    topRolesList.appendChild(badge);
-                });
-            } else {
-                topRolesSection.classList.add('d-none');
-            }
-
-            // Populate suggestions with staggered animation
-            const suggestionsList = document.getElementById('suggestionsList');
-            suggestionsList.innerHTML = '';
-            if (data.suggestions && data.suggestions.length > 0) {
-                data.suggestions.forEach((suggestion, i) => {
-                    const li = document.createElement('li');
-                    li.className = 'list-group-item bg-transparent text-body border-secondary border-opacity-25 ps-0';
-                    li.innerHTML = `<i class="bi bi-arrow-right-circle text-info me-2"></i>${suggestion}`;
-                    li.style.animation = `fadeInUp 0.4s ease-out ${(i + 3) * 0.1}s both`;
-                    suggestionsList.appendChild(li);
-                });
-            }
-
+            if (!resp.ok) throw new Error(`Server error (${resp.status})`);
+            const data = await resp.json();
+            renderAnalysisResults(data, role);
         } catch (err) {
             alert('Error: ' + err.message);
             console.error('Role check error:', err);

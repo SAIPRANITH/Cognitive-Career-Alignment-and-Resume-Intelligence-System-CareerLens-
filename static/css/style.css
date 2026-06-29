@@ -51,7 +51,7 @@ body::before {
 }
 
 /* Global Transitions */
-* {
+a, button, .btn, .card, .form-control, .form-select, .nav-link, .badge, input {
     transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -174,6 +174,86 @@ h1, h2, h3, h4, h5, h6, .brand-text {
 }
 
 /* ══════════════════════════════════════ */
+/*  FUTURISTIC CYBER CARDS               */
+/* ══════════════════════════════════════ */
+.cyber-card {
+    position: relative;
+    overflow: hidden;
+    background: rgba(10, 15, 28, 0.4);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.5s ease;
+    z-index: 1;
+}
+
+.cyber-card::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: conic-gradient(from 0deg, transparent 70%, var(--card-glow-color, rgba(13, 110, 253, 0.8)) 100%);
+    animation: rotateGlowBorder 4s linear infinite;
+    z-index: -2;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.cyber-card::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    background: rgba(10, 15, 28, 0.95);
+    border-radius: 14px;
+    z-index: -1;
+}
+
+.cyber-card:hover::before {
+    opacity: 1;
+}
+
+.cyber-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px var(--card-glow-dim, rgba(13, 110, 253, 0.3));
+}
+
+@keyframes rotateGlowBorder {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.cyber-scanline {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.03) 50%, transparent 100%);
+    background-size: 100% 4px;
+    animation: cyber-scan 8s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.cyber-card:hover .cyber-scanline {
+    opacity: 1;
+}
+
+@keyframes cyber-scan {
+    0% { background-position: 0 -100vh; }
+    100% { background-position: 0 100vh; }
+}
+
+.icon-float {
+    animation: iconFloat 3s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+/* ══════════════════════════════════════ */
 /*  BUTTONS                              */
 /* ══════════════════════════════════════ */
 .btn-primary, .btn-gradient, .hero-btn {
@@ -209,6 +289,50 @@ h1, h2, h3, h4, h5, h6, .brand-text {
     color: #fff;
 }
 
+.nav-primary-btn {
+    background: linear-gradient(135deg, #0d6efd, #00d2ff);
+    color: white !important;
+    font-weight: 600;
+    border: none;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 1;
+}
+.nav-primary-btn::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+    transform: skewX(-25deg);
+    animation: shine 3s infinite;
+    z-index: -1;
+}
+@keyframes shine {
+    0% { left: -100%; }
+    20% { left: 200%; }
+    100% { left: 200%; }
+}
+.nav-primary-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 10px 20px rgba(13, 110, 253, 0.4) !important;
+}
+
+.nav-secondary-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e2e8f0 !important;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+.nav-secondary-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2) !important;
+}
+
 /* ══════════════════════════════════════ */
 /*  FORMS                                */
 /* ══════════════════════════════════════ */
@@ -242,26 +366,6 @@ h1, h2, h3, h4, h5, h6, .brand-text {
     border-color: rgba(255, 255, 255, 0.3);
     background: rgba(255, 255, 255, 0.02);
     box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.02);
-}
-
-/* Sidebar */
-.sidebar {
-    background: rgba(6, 11, 20, 0.95);
-    border-right: 1px solid var(--border-glass);
-}
-
-.sidebar .nav-link {
-    color: var(--text-secondary);
-    border-radius: 8px;
-    margin: 4px 16px;
-    padding: 10px 16px;
-    transition: all 0.3s ease;
-    font-weight: 500;
-}
-
-.sidebar .nav-link:hover, .sidebar .nav-link.active {
-    background: rgba(0, 229, 255, 0.08);
-    color: var(--accent-primary);
 }
 
 /* Scrollbar */
@@ -417,8 +521,7 @@ h1, h2, h3, h4, h5, h6, .brand-text {
 .typewriter-text {
     overflow: hidden;
     white-space: nowrap;
-    border-right: 2px solid var(--accent-primary);
-    animation: typewriter 3s steps(40, end) both, blink-caret 0.75s step-end infinite;
+    animation: typewriter 3s steps(40, end) both;
 }
 
 /* Rotating Gradient Border */
@@ -650,7 +753,24 @@ body {
     transition: all 0.3s ease;
 }
 
-/* ── Icon Buttons ── */
+/* ── Dashboard Feature Rows ── */
+.feature-row {
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+.feature-row:hover {
+    background: rgba(255, 255, 255, 0.03);
+    transform: translateX(5px);
+}
+.highlight-row {
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+.highlight-row:hover {
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, transparent 100%) !important;
+    transform: scale(1.02) translateX(5px);
+}
 .icon-btn {
     width: 40px;
     height: 40px;
@@ -717,6 +837,85 @@ body {
     background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
     z-index: 9999;
     transition: width 0.1s linear;
+}
+
+/* ── Animated Pill Badges ── */
+.animated-pill {
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.7) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 50px;
+    padding: 0.5rem 1.2rem;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none !important;
+    font-weight: 500;
+    font-size: 0.9rem;
+    backdrop-filter: blur(5px);
+}
+.animated-pill:hover {
+    transform: translateY(-5px) scale(1.05);
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+.pill-matched:hover {
+    border-color: rgba(25, 135, 84, 0.5) !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2), 0 0 15px rgba(25, 135, 84, 0.2);
+}
+.pill-missing:hover {
+    border-color: rgba(220, 53, 69, 0.5) !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2), 0 0 15px rgba(220, 53, 69, 0.2);
+}
+
+/* ── Role Selector Tabs ── */
+.role-tab-btn {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 12px !important;
+    color: rgba(255,255,255,0.6) !important;
+    padding: 0.8rem 1.5rem !important;
+    transition: all 0.3s ease !important;
+    margin-right: 0.5rem;
+}
+.role-tab-btn.active, .role-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: #fff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(255, 255, 255, 0.05);
+}
+.role-tab-btn .badge {
+    background: rgba(255,255,255,0.1) !important;
+    color: inherit !important;
+    transition: all 0.3s;
+}
+.role-tab-btn.active .badge {
+    background: #0d6efd !important;
+    color: white !important;
+    box-shadow: 0 0 10px rgba(13, 110, 253, 0.5);
+}
+
+/* ── Missing Utility Classes ── */
+.cursor-pointer { cursor: pointer; }
+.drop-shadow { filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4)); }
+
+@media (min-width: 768px) {
+    .border-end-md { border-right: 1px solid rgba(255, 255, 255, 0.1) !important; }
+}
+@media (min-width: 992px) {
+    .border-end-lg { border-right: 1px solid rgba(255, 255, 255, 0.1) !important; }
+}
+
+/* Focus Accessibility (WCAG 2.1 AA) */
+:focus-visible {
+    outline: 2px solid rgba(0, 229, 255, 0.7);
+    outline-offset: 2px;
+}
+button:focus-visible, .btn:focus-visible {
+    box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.3);
 }
 
 /* Accessibility: Reduce Motion */

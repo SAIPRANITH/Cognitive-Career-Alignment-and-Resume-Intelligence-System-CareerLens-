@@ -1,7 +1,4 @@
-"""
-Resume Parser Module
-Extracts text from PDF and DOCX files, then extracts structured information.
-"""
+
 import re
 import os
 
@@ -118,11 +115,18 @@ EDUCATION_PATTERNS = [
     r'(?i)(master|m\.?s\.?|m\.?tech|m\.?sc|mca|mba|m\.?arch|m\.?des|m\.?com|pgdm)',
     r'(?i)(bachelor|b\.?s\.?|b\.?tech|b\.?e\.?|b\.?sc|bca|bba|b\.?arch|b\.?des|b\.?com|b\.?a)',
     r'(?i)(diploma|associate)',
-    r'(?i)(high school|12th|10th|hsc|ssc|secondary)'
+    r'(?i)(intermediate|12th|hsc|plus two|higher secondary)',
+    r'(?i)(10th|ssc|high school|secondary school|matriculation)'
 ]
 
+# Maps pattern index → Indian standard education label
 EDUCATION_LEVELS = {
-    0: 'PhD', 1: "Master's", 2: "Bachelor's", 3: "Bachelor's", 4: 'High School'
+    0: 'PhD',
+    1: 'MTech',
+    2: 'BTech',
+    3: 'BTech',
+    4: 'Intermediate',
+    5: '10th'
 }
 
 CERTIFICATION_KEYWORDS = [
@@ -164,11 +168,11 @@ def extract_skills(text):
 
 
 def extract_education(text):
-    """Extract education level from resume text."""
+    """Extract education level from resume text using Indian education standards."""
     for i, pattern in enumerate(EDUCATION_PATTERNS):
         if re.search(pattern, text):
-            return EDUCATION_LEVELS.get(i, "Bachelor's")
-    return "Bachelor's"
+            return EDUCATION_LEVELS.get(i, 'BTech')
+    return 'BTech'
 
 
 def extract_experience_years(text):

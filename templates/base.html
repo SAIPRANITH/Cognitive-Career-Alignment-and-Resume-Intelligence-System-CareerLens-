@@ -32,27 +32,30 @@
                 <i class="bi bi-list text-primary fs-2"></i>
             </button>
             <div class="collapse navbar-collapse justify-content-end" id="topNav">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
-                    <li class="nav-item me-4 d-none d-md-block">
-                        <div class="d-flex align-items-center bg-dark bg-opacity-50 px-3 py-1 rounded-pill border border-secondary border-opacity-25">
-                            <span class="pulse-indicator bg-success rounded-circle me-2" style="width: 8px; height: 8px; display: inline-block;"></span>
-                            <span class="text-success small fw-bold text-uppercase letter-spacing-1" style="font-size: 0.7rem;">Engine Online</span>
-                        </div>
+                <ul class="navbar-nav gap-3 align-items-center">
+                    <li class="nav-item">
+                        <a href="{{ url_for('dashboard') }}" class="btn nav-primary-btn rounded-pill px-4 shadow-lg position-relative overflow-hidden">
+                            <i class="bi bi-file-earmark-check fs-5 me-2"></i> Analyze Resume
+                        </a>
                     </li>
-                </ul>
-                <ul class="navbar-nav gap-4 align-items-center">
-                    <li class="nav-item"><a class="nav-link fw-bold" href="{{ url_for('dashboard') }}"><i class="bi bi-grid-1x2 me-1"></i> Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link fw-bold" href="{{ url_for('ai_feedback') }}"><i class="bi bi-chat-right-text me-1"></i> AI Feedback</a></li>
-                    <li class="nav-item"><a class="nav-link fw-bold" href="{{ url_for('cover_letter') }}"><i class="bi bi-envelope-paper me-1"></i> Cover Letter</a></li>
-                    <li class="nav-item"><a class="nav-link fw-bold" href="{{ url_for('role_checker_tool') }}"><i class="bi bi-bullseye me-1"></i> Role Checker</a></li>
-                    <li class="nav-item"><a class="nav-link fw-bold text-gradient" href="{{ url_for('engine_details') }}"><i class="bi bi-cpu me-1"></i> Engine Core</a></li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('role_checker_tool') }}" class="btn nav-secondary-btn rounded-pill px-4 shadow-sm">
+                            <i class="bi bi-bullseye text-warning me-2"></i> Target Role
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/ai-feedback" class="btn nav-secondary-btn rounded-pill px-4 shadow-sm">
+                            <i class="bi bi-robot text-info me-2"></i> AI Feedback
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    
+    <main role="main">
     {% block body %}{% endblock %}
+    </main>
 
     <!-- Professional Footer -->
     <footer class="mt-auto border-top border-secondary border-opacity-10 py-4" style="background: rgba(6, 11, 20, 0.8); backdrop-filter: blur(10px);">
@@ -63,19 +66,9 @@
                     <span class="text-muted small ms-2">&copy; 2026</span>
                 </div>
                 <div class="col-md-4 text-center mb-3 mb-md-0">
-                    <div class="d-flex justify-content-center gap-3">
-                        <a href="{{ url_for('dashboard') }}" class="text-muted small text-decoration-none badge-hover">Dashboard</a>
-                        <a href="{{ url_for('engine_details') }}" class="text-muted small text-decoration-none badge-hover">Engine</a>
-                        <a href="{{ url_for('ai_feedback') }}" class="text-muted small text-decoration-none badge-hover">AI</a>
-                    </div>
+                    <span class="text-muted small">AI-Powered Resume Intelligence</span>
                 </div>
-                <div class="col-md-4 text-center text-md-end">
-                    <div class="d-flex justify-content-center justify-content-md-end gap-2">
-                        <span class="badge bg-secondary bg-opacity-10 text-muted border border-secondary border-opacity-25 rounded-pill px-2 py-1" style="font-size: 0.65rem;">Flask</span>
-                        <span class="badge bg-secondary bg-opacity-10 text-muted border border-secondary border-opacity-25 rounded-pill px-2 py-1" style="font-size: 0.65rem;">Scikit-learn</span>
-                        <span class="badge bg-secondary bg-opacity-10 text-muted border border-secondary border-opacity-25 rounded-pill px-2 py-1" style="font-size: 0.65rem;">Gemini AI</span>
-                    </div>
-                </div>
+
             </div>
         </div>
     </footer>

@@ -18,7 +18,7 @@ JOB_CATEGORIES = [
     'Operations Manager', 'PMO', 'Python Developer', 'SAP Developer', 'Sales',
     'Testing', 'Web Designing',
     # Extended categories (not in Kaggle model but supported via skill matching)
-    'Cybersecurity', 'AI/ML Engineer', 'Robotics', 'Electronics & Communication'
+    'Cybersecurity', 'AI/ML Engineer', 'Robotics', 'Electronics & Communication', 'Web Developer'
 ]
 
 # ── Skills pools per category (keys match Kaggle labels exactly) ──
@@ -51,10 +51,11 @@ SKILLS_MAP = {
     'Cybersecurity': ['Network Security','Penetration Testing','SIEM','Vulnerability Assessment','Incident Response','Python','Linux','Malware Analysis','OWASP','Cryptography'],
     'AI/ML Engineer': ['Python','TensorFlow','PyTorch','Scikit-learn','Docker','Kubernetes','MLOps','Deep Learning','NLP','Computer Vision','Model Deployment'],
     'Robotics': ['ROS','C++','Python','Computer Vision','Kinematics','Sensors','Control Systems','IoT','Machine Learning','Embedded Systems'],
-    'Electronics & Communication': ['VLSI','VHDL','Verilog','Signal Processing','Analog Circuits','Digital Circuits','Antenna Design','RF Engineering','Communication Systems','Microprocessors','Wireless Communication','IoT','ARM','DSP','PCB Layout','Oscilloscope','Spectrum Analyzer','Telecommunications','Optical Communication','5G','LTE','Embedded Systems','MATLAB','C/C++']
+    'Electronics & Communication': ['VLSI','VHDL','Verilog','Signal Processing','Analog Circuits','Digital Circuits','Antenna Design','RF Engineering','Communication Systems','Microprocessors','Wireless Communication','IoT','ARM','DSP','PCB Layout','Oscilloscope','Spectrum Analyzer','Telecommunications','Optical Communication','5G','LTE','Embedded Systems','MATLAB','C/C++'],
+    'Web Developer': ['HTML','CSS','JavaScript','React','Angular','Vue.js','Node.js','Express','MongoDB','SQL','Git','REST APIs','TypeScript','Webpack','Docker','AWS']
 }
 
-EDUCATION_LEVELS = ['High School', "Bachelor's", "Master's", 'PhD']
+EDUCATION_LEVELS = ['10th', 'Intermediate', 'BTech', 'MTech', 'PhD']
 
 EDUCATION_FIELDS = [
     'Computer Science','Information Technology','Data Science',
@@ -62,18 +63,6 @@ EDUCATION_FIELDS = [
     'Software Engineering','Cybersecurity','Business Analytics',
     'Mechanical Engineering','Physics','Economics'
 ]
-
-CERTIFICATIONS_MAP = {
-    'Data Science': ['AWS ML Specialty','TensorFlow Developer','Google Data Analytics','IBM Data Science','Microsoft Azure AI'],
-    'Java Developer': ['Oracle Java SE','AWS Developer Associate','Spring Professional','Microsoft Azure Developer'],
-    'Web Designing': ['Meta Front-End Developer','Google UX Design','MongoDB Developer','React Certification'],
-    'DevOps Engineer': ['AWS Solutions Architect','CKA','Terraform Associate','Docker Certified Associate','Azure DevOps Engineer'],
-    'Python Developer': ['PCAP','PCPP','AWS Developer Associate','Django Certification'],
-    'Database': ['Oracle DBA','AWS Database Specialty','MongoDB DBA','Microsoft SQL Server','PostgreSQL Certified'],
-    'Cybersecurity': ['CompTIA Security+','CEH','CISSP','OSCP','CISM'],
-    'AI/ML Engineer': ['AWS ML Specialty','TensorFlow Developer','Google ML Engineer','Databricks ML Associate'],
-    'Blockchain': ['Certified Blockchain Developer','Ethereum Developer','Hyperledger Certification'],
-}
 
 # Safety net: ensure all JOB_CATEGORIES have a SKILLS_MAP entry
 for cat in JOB_CATEGORIES:
