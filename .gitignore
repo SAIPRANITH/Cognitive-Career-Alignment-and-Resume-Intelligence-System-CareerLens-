@@ -15,3 +15,6 @@ parsed_resume.json
 ai_resume_dataset.csv
 dev_scripts/
 *.docx
+# Prevent leftover graph images in root
+confusion_matrix.png
+model_comparison.png

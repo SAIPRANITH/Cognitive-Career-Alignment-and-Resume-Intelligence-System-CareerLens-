@@ -3,7 +3,7 @@ Flask Web Application — Career Lens
 """
 import os, uuid
 from flask import (Flask, render_template, request, redirect, url_for,
-                   flash, jsonify, send_from_directory)
+                   flash, jsonify)
 from werkzeug.utils import secure_filename
 import joblib
 
@@ -60,6 +60,11 @@ MODELS = load_models()
 def index():
     """Main Landing Page."""
     return render_template('index.html')
+
+@app.route('/chart/<filename>')
+def serve_chart(filename):
+    from flask import send_from_directory
+    return send_from_directory(CHARTS_FOLDER, filename)
 
 @app.route('/dashboard')
 def dashboard():
@@ -171,8 +176,6 @@ def upload_resume():
         })
 
     blended_roles.sort(key=lambda x: x['probability'], reverse=True)
-    top_3_roles = blended_roles[:3]
-    
     top_roles = blended_roles[:5]
 
     roles = [r['role'] for r in top_roles]
@@ -219,7 +222,7 @@ def upload_resume():
         'score': score,
         'cluster_label': cluster_label,
         'salary_estimate': pred_salary,
-        'top_3_roles': top_3_roles,
+        'top_3_roles': blended_roles[:3],
     }
 
     response = render_template('analysis.html', result=result, categories=JOB_CATEGORIES)
@@ -468,9 +471,6 @@ def api_generate_feedback_file():
                 pass
 
 
-@app.route('/static/charts/<path:filename>')
-def serve_chart(filename):
-    return send_from_directory(CHARTS_FOLDER, filename)
 
 
 if __name__ == '__main__':

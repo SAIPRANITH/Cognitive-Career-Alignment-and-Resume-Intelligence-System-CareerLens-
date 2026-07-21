@@ -49,6 +49,7 @@ def train_and_save_models():
     
     print("\n3. Encoding labels...")
     le = LabelEncoder()
+    
     df['Category_Encoded'] = le.fit_transform(df['Category'])
     joblib.dump(le, os.path.join(MODELS_DIR, 'label_encoder.pkl'))
     print(f"Classes found: {len(le.classes_)}")

@@ -326,12 +326,325 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Add ripple keyframes dynamically
-    if (!document.getElementById('ripple-style')) {
-        const style = document.createElement('style');
-        style.id = 'ripple-style';
-        style.textContent = `@keyframes rippleAnim { to { transform: scale(4); opacity: 0; } }`;
-        document.head.appendChild(style);
+    // ══════════════════════════════════════
+    //  (Removed Magnetic Cursor & Glitch)
+    // ══════════════════════════════════════
+
+    // ══════════════════════════════════════
+    //  WORD-BY-WORD REVEAL ON HERO SUBTITLE
+    // ══════════════════════════════════════
+    document.querySelectorAll('.hero-subtitle').forEach(el => {
+        const words = el.textContent.trim().split(/\s+/);
+        el.innerHTML = '';
+        el.classList.add('word-reveal');
+        words.forEach((word, i) => {
+            const span = document.createElement('span');
+            span.textContent = word + '\u00A0';
+            span.style.animationDelay = `${0.8 + i * 0.04}s`;
+            el.appendChild(span);
+        });
+    });
+
+    // ══════════════════════════════════════
+    //  INJECT AURORA BLOBS INTO HERO
+    // ══════════════════════════════════════
+    const heroSection = document.querySelector('.hero-section');
+    if (heroSection) {
+        heroSection.style.position = 'relative';
+        ['a1', 'a2', 'a3'].forEach(cls => {
+            const blob = document.createElement('div');
+            blob.className = `aurora-glow ${cls}`;
+            heroSection.appendChild(blob);
+        });
+        // Also inject morph blob
+        const morphBlob = document.createElement('div');
+        morphBlob.className = 'morph-blob';
+        morphBlob.style.top = '20%';
+        morphBlob.style.left = '50%';
+        morphBlob.style.transform = 'translateX(-50%)';
+        heroSection.appendChild(morphBlob);
     }
 
+    // ══════════════════════════════════════
+    //  3D TILT ON TECH FACT BOXES
+    // ══════════════════════════════════════
+    document.querySelectorAll('.tech-fact-box, .feature-card').forEach(card => {
+        card.addEventListener('mousemove', e => {
+            const rect = card.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / rect.width - 0.5;
+            const y = (e.clientY - rect.top) / rect.height - 0.5;
+            card.style.transform = `perspective(800px) rotateY(${x * 12}deg) rotateX(${-y * 12}deg) scale(1.02)`;
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = '';
+            card.style.transition = 'transform 0.5s ease';
+        });
+        card.addEventListener('mouseenter', () => {
+            card.style.transition = 'none';
+        });
+    });
+
+    // ══════════════════════════════════════
+    //  SCROLL SPARK PARTICLES
+    // ══════════════════════════════════════
+    let lastScrollY = window.scrollY;
+    let scrollThrottle = false;
+    window.addEventListener('scroll', () => {
+        if (scrollThrottle) return;
+        scrollThrottle = true;
+        setTimeout(() => { scrollThrottle = false; }, 60);
+
+        const delta = Math.abs(window.scrollY - lastScrollY);
+        lastScrollY = window.scrollY;
+        if (delta > 15) {
+            for (let i = 0; i < 3; i++) {
+                const p = document.createElement('div');
+                p.className = 'scroll-particle';
+                p.style.left = (Math.random() * window.innerWidth) + 'px';
+                p.style.top = (Math.random() * window.innerHeight) + 'px';
+                document.body.appendChild(p);
+                setTimeout(() => p.remove(), 800);
+            }
+        }
+    }, { passive: true });
+
+    // ══════════════════════════════════════
+    //  NUMBER COUNTING WITH SUFFIX
+    // ══════════════════════════════════════
+    document.querySelectorAll('[data-count-to]').forEach(el => {
+        const target = parseFloat(el.getAttribute('data-count-to'));
+        const suffix = el.getAttribute('data-suffix') || '';
+        const decimals = target % 1 !== 0 ? 1 : 0;
+        const duration = 2000;
+        const startTime = performance.now();
+
+        function tick(now) {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            el.textContent = (eased * target).toFixed(decimals) + suffix;
+            if (progress < 1) requestAnimationFrame(tick);
+        }
+
+        const obs = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting) {
+                requestAnimationFrame(tick);
+                obs.unobserve(el);
+            }
+        }, { threshold: 0.5 });
+        obs.observe(el);
+    });
+
+    // ══════════════════════════════════════
+    //  LENIS SMOOTH SCROLLING
+    // ══════════════════════════════════════
+    if (typeof Lenis !== 'undefined') {
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
+            smooth: true,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+    }
+
+    // ══════════════════════════════════════
+    //  LETTER-BY-LETTER REVEAL (HEADINGS)
+    // ══════════════════════════════════════
+    document.querySelectorAll('.letter-reveal').forEach(el => {
+        const text = el.textContent.trim();
+        el.innerHTML = '';
+        [...text].forEach((letter, i) => {
+            const span = document.createElement('span');
+            span.textContent = letter === ' ' ? '\u00A0' : letter;
+            span.style.animationDelay = `${i * 0.03}s`;
+            el.appendChild(span);
+        });
+    });
+
+    // ══════════════════════════════════════
+    //  IMAGE OBSERVER (FADE-IN & CLIP REVEAL)
+    // ══════════════════════════════════════
+    const imgObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-revealed');
+                imgObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.2 });
+
+    document.querySelectorAll('.img-fade-in, .img-clip-reveal').forEach(img => {
+        imgObserver.observe(img);
+    });
+
+    // ══════════════════════════════════════
+    //  NEW ANIMATIONS & EFFECTS
+    // ══════════════════════════════════════
+
+    // 1. Text Scramble
+    class TextScramble {
+        constructor(el) {
+            this.el = el;
+            this.chars = '!<>-_\\\\/[]{}—=+*^?#________';
+            this.update = this.update.bind(this);
+        }
+        setText(newText) {
+            const oldText = this.el.innerText;
+            const length = Math.max(oldText.length, newText.length);
+            const promise = new Promise((resolve) => this.resolve = resolve);
+            this.queue = [];
+            for (let i = 0; i < length; i++) {
+                const from = oldText[i] || '';
+                const to = newText[i] || '';
+                const start = Math.floor(Math.random() * 40);
+                const end = start + Math.floor(Math.random() * 40);
+                this.queue.push({ from, to, start, end });
+            }
+            cancelAnimationFrame(this.frameRequest);
+            this.frame = 0;
+            this.update();
+            return promise;
+        }
+        update() {
+            let output = '';
+            let complete = 0;
+            for (let i = 0, n = this.queue.length; i < n; i++) {
+                let { from, to, start, end, char } = this.queue[i];
+                if (this.frame >= end) {
+                    complete++;
+                    output += to;
+                } else if (this.frame >= start) {
+                    if (!char || Math.random() < 0.28) {
+                        char = this.randomChar();
+                        this.queue[i].char = char;
+                    }
+                    output += `<span style="color:#00e5ff">${char}</span>`;
+                } else {
+                    output += from;
+                }
+            }
+            this.el.innerHTML = output;
+            if (complete === this.queue.length) {
+                this.resolve();
+            } else {
+                this.frameRequest = requestAnimationFrame(this.update);
+                this.frame++;
+            }
+        }
+        randomChar() {
+            return this.chars[Math.floor(Math.random() * this.chars.length)];
+        }
+    }
+
+    document.querySelectorAll('[data-scramble]').forEach(el => {
+        const fx = new TextScramble(el);
+        const text = el.getAttribute('data-scramble');
+        const obs = new IntersectionObserver(e => {
+            if (e[0].isIntersecting) { fx.setText(text); obs.unobserve(el); }
+        });
+        obs.observe(el);
+    });
+
+    // 2. Parallax Orbs
+    const orbs = [];
+    for(let i=0; i<3; i++) {
+        let orb = document.createElement('div');
+        orb.className = 'aurora-glow';
+        orb.style.position = 'fixed';
+        orb.style.top = Math.random() * 100 + 'vh';
+        orb.style.left = Math.random() * 100 + 'vw';
+        orb.style.zIndex = -5;
+        orb.style.opacity = 0.3;
+        document.body.appendChild(orb);
+        orbs.push({el: orb, speed: Math.random() * 0.5 + 0.1});
+    }
+    
+    // 3. Scroll Update (Progress & Skew & Orbs)
+    const progressBar = document.createElement('div');
+    progressBar.id = 'scroll-progress';
+    document.body.appendChild(progressBar);
+
+    let scrollWrap = document.querySelector('main') || document.body;
+    let isScrolling;
+    window.addEventListener('scroll', () => {
+        let scrollY = window.scrollY;
+        
+        // Progress bar
+        let dh = document.documentElement.scrollHeight - window.innerHeight;
+        if(dh > 0) progressBar.style.transform = `scaleX(${scrollY / dh})`;
+
+        // Removed Scroll Skew due to NaN jitter
+
+        // Orbs parallax
+        orbs.forEach(orb => {
+            orb.el.style.transform = `translateY(${-scrollY * orb.speed}px)`;
+        });
+    });
+
+    // 4. Staggered Reveal Observer
+    const staggerObs = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-revealed');
+                staggerObs.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal-stagger').forEach((el, i) => {
+        el.style.transitionDelay = `${(i%5)*0.1}s`;
+        staggerObs.observe(el);
+    });
+
+    // 5. Ripple Click
+    document.addEventListener('mousedown', function (e) {
+        if (!e.target.closest('.card, .btn')) return;
+        const target = e.target.closest('.card, .btn');
+        if (getComputedStyle(target).position === 'static') target.style.position = 'relative';
+        target.style.overflow = 'hidden';
+        const ripple = document.createElement('span');
+        const rect = target.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = e.clientX - rect.left - size/2 + 'px';
+        ripple.style.top = e.clientY - rect.top - size/2 + 'px';
+        ripple.style.position = 'absolute';
+        ripple.style.background = 'rgba(0, 229, 255, 0.4)';
+        ripple.style.borderRadius = '50%';
+        ripple.style.transform = 'scale(0)';
+        ripple.style.animation = 'rippleAnim 0.6s linear';
+        ripple.style.pointerEvents = 'none';
+        target.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+    });
+
 });
+
+
+// ══════════════════════════════════════
+//  CINEMATIC PAGE LOADER (runs outside DOMContentLoaded)
+// ══════════════════════════════════════
+(function() {
+    // Don't show on analysis results page (avoid annoying repeat loads)
+    if (document.querySelector('.cinematic-loader')) return;
+
+    const loader = document.createElement('div');
+    loader.className = 'cinematic-loader';
+    loader.innerHTML = `
+        <div class="loader-ring"></div>
+        <div class="loader-text">Initializing Career Lens</div>
+        <div class="loader-bar"><div class="loader-bar-inner"></div></div>
+    `;
+    document.body.prepend(loader);
+
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            loader.classList.add('fade-out');
+            setTimeout(() => loader.remove(), 600);
+        }, 1600);
+    });
+})();

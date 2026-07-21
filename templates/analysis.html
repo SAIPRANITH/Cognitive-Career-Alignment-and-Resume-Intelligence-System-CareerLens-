@@ -153,15 +153,15 @@
                             <button type="button" data-bs-target="#chartCarousel" data-bs-slide-to="1"></button>
                             <button type="button" data-bs-target="#chartCarousel" data-bs-slide-to="2"></button>
                         </div>
-                        <div class="carousel-inner rounded-bottom-4" style="background: radial-gradient(circle at center, rgba(0, 229, 255, 0.05) 0%, transparent 70%);">
-                            <div class="carousel-item active p-2">
-                                <img src="{{ url_for('serve_chart', filename='user_role_probs.png') }}" class="d-block w-100 drop-shadow" alt="Role Probabilities">
+                        <div class="carousel-inner rounded-bottom-4" style="background: radial-gradient(circle at center, rgba(0, 229, 255, 0.05) 0%, transparent 70%); aspect-ratio: 4/3;">
+                            <div class="carousel-item active p-2 h-100">
+                                <img src="{{ url_for('serve_chart', filename='user_role_probs.png') }}" class="d-block w-100 h-100 drop-shadow" style="object-fit: contain;" alt="Role Probabilities">
                             </div>
-                            <div class="carousel-item p-2">
-                                <img src="{{ url_for('serve_chart', filename='user_skill_dist.png') }}" class="d-block w-100 drop-shadow" alt="Skill Distribution">
+                            <div class="carousel-item p-2 h-100">
+                                <img src="{{ url_for('serve_chart', filename='user_skill_dist.png') }}" class="d-block w-100 h-100 drop-shadow" style="object-fit: contain;" alt="Skill Distribution">
                             </div>
-                            <div class="carousel-item p-2">
-                                <img src="{{ url_for('serve_chart', filename='user_salary.png') }}" class="d-block w-100 drop-shadow" alt="Salary Estimation">
+                            <div class="carousel-item p-2 h-100">
+                                <img src="{{ url_for('serve_chart', filename='user_salary.png') }}" class="d-block w-100 h-100 drop-shadow" style="object-fit: contain;" alt="Salary Estimation">
                             </div>
                         </div>
                         <button class="carousel-control-prev" type="button" data-bs-target="#chartCarousel" data-bs-slide="prev">
@@ -318,13 +318,11 @@
                             <div class="col-md-6 border-end-md border-secondary border-opacity-25">
                                 <h6 class="small fw-bold text-success text-uppercase mb-2"><i class="bi bi-check-circle-fill me-1"></i> Matched Skills</h6>
                                 <div id="resMatched" class="d-flex flex-wrap gap-1">
-                                    <!-- JS injected -->
                                 </div>
                             </div>
                             <div class="col-md-6 ps-md-3">
                                 <h6 class="small fw-bold text-danger text-uppercase mb-2"><i class="bi bi-x-circle-fill me-1"></i> Missing Skills</h6>
                                 <div id="resMissing" class="d-flex flex-wrap gap-1">
-                                    <!-- JS injected -->
                                 </div>
                             </div>
                         </div>
@@ -332,7 +330,6 @@
                         <div class="mb-3 p-3 bg-secondary bg-opacity-10 rounded-3 border border-secondary border-opacity-25">
                             <h6 class="small fw-bold text-muted text-uppercase mb-2"><i class="bi bi-robot me-1 text-info"></i> AI Action Plan:</h6>
                             <ul class="text-muted small ps-3 mb-0" id="resSuggestions">
-                                <!-- JS injected -->
                             </ul>
                         </div>
                     </div>
@@ -397,7 +394,50 @@
                 throw new Error('No feedback received from the server');
             }
             
-            document.getElementById('aiModalBody').innerHTML = marked.parse(data.markdown);
+            const htmlContent = marked.parse(data.markdown);
+            const contentDiv = document.getElementById('aiModalBody');
+            contentDiv.innerHTML = '';
+            contentDiv.classList.add('ai-typing');
+            
+            let tokens = [];
+            let temp = "";
+            let inTag = false;
+            
+            for (let i = 0; i < htmlContent.length; i++) {
+                let char = htmlContent[i];
+                if (char === '<') {
+                    if (temp) { tokens.push({type: 'text', content: temp}); temp = ""; }
+                    inTag = true;
+                    temp += char;
+                } else if (char === '>') {
+                    temp += char;
+                    tokens.push({type: 'tag', content: temp});
+                    temp = "";
+                    inTag = false;
+                } else {
+                    temp += char;
+                    if (!inTag && (char === ' ' || char === '\n')) {
+                        tokens.push({type: 'text', content: temp});
+                        temp = "";
+                    }
+                }
+            }
+            if (temp) tokens.push({type: 'text', content: temp});
+            
+            let i = 0;
+            let currentHTML = "";
+            function type() {
+                if (i < tokens.length) {
+                    currentHTML += tokens[i].content;
+                    contentDiv.innerHTML = currentHTML;
+                    let delay = tokens[i].type === 'tag' ? 0 : 25 + Math.random() * 25;
+                    i++;
+                    setTimeout(type, delay);
+                } else {
+                    contentDiv.classList.remove('ai-typing');
+                }
+            }
+            type();
         } catch(e) {
             document.getElementById('aiModalBody').innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i><strong>Error:</strong> ${e.message}</div>`;
         }

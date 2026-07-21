@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderFeedback(markdown) {
         generatedMarkdown = markdown;
-        contentDiv.innerHTML = marked.parse(markdown);
+        const htmlContent = marked.parse(markdown);
         
         resultContainer.classList.remove('d-none');
         actionsBar.classList.remove('d-none');
@@ -172,6 +172,49 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Trigger subtle animation
         resultContainer.style.animation = 'fadeInUp 0.6s ease-out';
+        
+        // Word-by-word AI typing effect
+        contentDiv.innerHTML = '';
+        contentDiv.classList.add('ai-typing');
+        let tokens = [];
+        let temp = "";
+        let inTag = false;
+        
+        for (let i = 0; i < htmlContent.length; i++) {
+            let char = htmlContent[i];
+            if (char === '<') {
+                if (temp) { tokens.push({type: 'text', content: temp}); temp = ""; }
+                inTag = true;
+                temp += char;
+            } else if (char === '>') {
+                temp += char;
+                tokens.push({type: 'tag', content: temp});
+                temp = "";
+                inTag = false;
+            } else {
+                temp += char;
+                if (!inTag && (char === ' ' || char === '\n')) {
+                    tokens.push({type: 'text', content: temp});
+                    temp = "";
+                }
+            }
+        }
+        if (temp) tokens.push({type: 'text', content: temp});
+        
+        let i = 0;
+        let currentHTML = "";
+        function type() {
+            if (i < tokens.length) {
+                currentHTML += tokens[i].content;
+                contentDiv.innerHTML = currentHTML;
+                let delay = tokens[i].type === 'tag' ? 0 : 25 + Math.random() * 25;
+                i++;
+                setTimeout(type, delay);
+            } else {
+                contentDiv.classList.remove('ai-typing');
+            }
+        }
+        type();
     }
 
     // Manual Form Submission
