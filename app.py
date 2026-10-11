@@ -409,6 +409,28 @@ def _calculate_role_eligibility(target_role, skills, experience, education, resu
     }
 
 
+def _generic_resume_feedback(target_role, follow_up=False):
+    if follow_up:
+        return (
+            "AI is temporarily unavailable, so I can't give a resume-specific answer "
+            "to that follow-up yet. In the meantime, prioritize the change that best "
+            "connects a relevant skill to a clear result. Use the job posting to decide "
+            "what to emphasize, and include only details that are accurate."
+        )
+
+    role = target_role if target_role != 'General' else 'your target'
+    return (
+        "AI is temporarily unavailable, so this is general guidance rather than a "
+        "resume-specific review.\n\n"
+        f"For a {role} role, focus on these improvements:\n"
+        "- Put the most relevant skills and experience near the top.\n"
+        "- Start each experience bullet with an action and describe what you delivered.\n"
+        "- Include measurable outcomes when you can support them with accurate details.\n"
+        "- Use relevant wording from the job description only when it matches your experience.\n"
+        "- Keep dates, titles, spacing, and formatting consistent, then proofread carefully."
+    )
+
+
 @app.route('/api/generate-feedback', methods=['POST'])
 def api_generate_feedback():
     """Start an AI resume-advice conversation."""
@@ -438,7 +460,13 @@ def api_generate_feedback():
         })
     except AIProviderError as e:
         app.logger.warning('Resume chat unavailable: %s', e)
-        return jsonify({'error': str(e)}), 503
+        return jsonify({
+            'response': _generic_resume_feedback(target_role),
+            'resume_text': resume_text,
+            'sources': [],
+            'fallback': True,
+            'error': str(e),
+        }), 503
 
 
 @app.route('/api/resume-chat', methods=['POST'])
@@ -486,7 +514,12 @@ def api_resume_chat():
         return jsonify({'response': response, 'sources': sources})
     except AIProviderError as e:
         app.logger.warning('Resume chat unavailable: %s', e)
-        return jsonify({'error': str(e)}), 503
+        return jsonify({
+            'response': _generic_resume_feedback(target_role, follow_up=True),
+            'sources': [],
+            'fallback': True,
+            'error': str(e),
+        }), 503
 
 
 @app.route('/ai-feedback')
@@ -536,7 +569,13 @@ def api_generate_feedback_file():
         })
     except AIProviderError as e:
         app.logger.warning('Resume chat unavailable: %s', e)
-        return jsonify({'error': str(e)}), 503
+        return jsonify({
+            'response': _generic_resume_feedback(target_role),
+            'resume_text': resume_text,
+            'sources': [],
+            'fallback': True,
+            'error': str(e),
+        }), 503
     except Exception as e:
         app.logger.exception('Resume upload review failed')
         return jsonify({'error': 'The uploaded resume could not be reviewed. Please try again.'}), 500

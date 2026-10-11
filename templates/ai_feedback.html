@@ -3,6 +3,79 @@
 {% block title %}AI Resume Feedback | Career Lens{% endblock %}
 
 {% block head %}
+<style>
+    .ai-review-loader {
+        width: min(100%, 440px);
+        padding: 1.25rem;
+        border: 1px solid rgba(13, 202, 240, 0.18);
+        border-radius: 1rem;
+        background: rgba(13, 202, 240, 0.04);
+    }
+
+    .ai-review-loader-line {
+        height: 0.7rem;
+        margin: 0.8rem 0;
+        border-radius: 1rem;
+        background: linear-gradient(90deg, rgba(148, 163, 184, 0.08), rgba(13, 202, 240, 0.28), rgba(148, 163, 184, 0.08));
+        background-size: 200% 100%;
+        animation: ai-loader-shimmer 1.5s ease-in-out infinite;
+    }
+
+    .ai-review-loader-line:nth-child(2) { width: 88%; animation-delay: 0.12s; }
+    .ai-review-loader-line:nth-child(4) { width: 68%; animation-delay: 0.24s; }
+
+    .ai-response-line {
+        animation: ai-line-in 0.28s ease-out both;
+        line-height: 1.65;
+    }
+
+    .ai-response-label {
+        color: #ffc107;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .ai-typing-dots {
+        display: inline-flex;
+        gap: 0.25rem;
+        align-items: center;
+        min-height: 1.25rem;
+    }
+
+    .ai-typing-dots span {
+        width: 0.38rem;
+        height: 0.38rem;
+        border-radius: 50%;
+        background: #0dcaf0;
+        animation: ai-dot-pulse 1s ease-in-out infinite;
+    }
+
+    .ai-typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+    .ai-typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes ai-loader-shimmer {
+        from { background-position: 100% 0; }
+        to { background-position: -100% 0; }
+    }
+
+    @keyframes ai-line-in {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes ai-dot-pulse {
+        0%, 60%, 100% { opacity: 0.35; transform: translateY(0); }
+        30% { opacity: 1; transform: translateY(-3px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .ai-review-loader-line,
+        .ai-response-line,
+        .ai-typing-dots span { animation: none; }
+    }
+</style>
 {% endblock %}
 
 {% block body %}
@@ -116,9 +189,16 @@
 
                     <!-- Loader State -->
                     <div id="fbLoaderState" class="d-none d-flex flex-column align-items-center justify-content-center my-auto py-5">
-                        <div class="spinner-border text-info mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
-                        <p class="fw-semibold text-info mb-1">Reviewing your resume...</p>
-                        <small class="text-muted text-center">This may take a few seconds.</small>
+                        <div class="ai-review-loader" role="status" aria-live="polite">
+                            <div class="d-flex align-items-center gap-2 text-info fw-semibold">
+                                <i class="bi bi-stars"></i>
+                                <span id="fbLoaderMessage">Reading your resume...</span>
+                            </div>
+                            <div class="ai-review-loader-line"></div>
+                            <div class="ai-review-loader-line"></div>
+                            <div class="ai-review-loader-line"></div>
+                            <small class="text-muted">Preparing focused feedback</small>
+                        </div>
                     </div>
 
                     <!-- Result Content -->
@@ -156,11 +236,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatSend = document.getElementById('feedbackChatSend');
     const copyButton = document.getElementById('btnCopyFb');
     const downloadButton = document.getElementById('btnDownloadFb');
+    const loaderMessage = document.getElementById('fbLoaderMessage');
 
     let resumeText = '';
     let targetRole = 'General';
     let history = [];
     let transcript = '';
+    let loaderTimer;
 
     function showLoading() {
         emptyState.classList.add('d-none');
@@ -168,9 +250,47 @@ document.addEventListener('DOMContentLoaded', () => {
         actionsBar.classList.add('d-none');
         chatForm.classList.add('d-none');
         loaderState.classList.remove('d-none');
+        loaderMessage.textContent = 'Reading your resume...';
+        clearInterval(loaderTimer);
+        const loadingMessages = [
+            'Reading your resume...',
+            'Identifying the most useful improvements...',
+            'Preparing focused feedback...'
+        ];
+        let messageIndex = 0;
+        loaderTimer = setInterval(() => {
+            messageIndex = (messageIndex + 1) % loadingMessages.length;
+            loaderMessage.textContent = loadingMessages[messageIndex];
+        }, 2200);
     }
 
-    function addMessage(role, text, sources = []) {
+    function animateResponse(content, text) {
+        const lines = text.split('\n').flatMap((line) => {
+            if (line.length <= 180) return [line];
+            return (line.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [line])
+                .map((sentence) => sentence.trim());
+        });
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (prefersReducedMotion) {
+            content.textContent = text;
+            return;
+        }
+
+        let lineIndex = 0;
+        function revealNextLine() {
+            if (lineIndex >= lines.length) return;
+            const lineElement = document.createElement('div');
+            lineElement.className = 'ai-response-line';
+            lineElement.textContent = lines[lineIndex].trim() || '\u00a0';
+            content.appendChild(lineElement);
+            lineIndex += 1;
+            conversationDiv.scrollTop = conversationDiv.scrollHeight;
+            if (lineIndex < lines.length) window.setTimeout(revealNextLine, 110);
+        }
+        revealNextLine();
+    }
+
+    function addMessage(role, text, sources = [], fallback = false) {
         const message = document.createElement('div');
         message.className = role === 'assistant'
             ? 'align-self-start rounded-4 px-3 py-2 bg-secondary bg-opacity-25'
@@ -181,8 +301,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const label = document.createElement('strong');
         label.className = 'd-block small text-info mb-1';
         label.textContent = role === 'assistant' ? 'Career Lens' : 'You';
+        if (role === 'assistant' && fallback) {
+            const fallbackLabel = document.createElement('span');
+            fallbackLabel.className = 'ai-response-label ms-2';
+            fallbackLabel.textContent = 'General guidance';
+            label.appendChild(fallbackLabel);
+        }
         const content = document.createElement('div');
-        content.textContent = text;
+        if (role === 'assistant') {
+            animateResponse(content, text);
+        } else {
+            content.textContent = text;
+        }
         message.append(label, content);
 
         if (role === 'assistant' && Array.isArray(sources) && sources.length) {
@@ -209,6 +339,25 @@ document.addEventListener('DOMContentLoaded', () => {
         conversationDiv.scrollTop = conversationDiv.scrollHeight;
     }
 
+    function addTypingIndicator() {
+        const message = document.createElement('div');
+        message.className = 'align-self-start rounded-4 px-3 py-2 bg-secondary bg-opacity-25';
+        message.setAttribute('aria-label', 'Career Lens is preparing a reply');
+        const label = document.createElement('strong');
+        label.className = 'd-block small text-info mb-1';
+        label.textContent = 'Career Lens';
+        const dots = document.createElement('span');
+        dots.className = 'ai-typing-dots';
+        dots.setAttribute('aria-hidden', 'true');
+        for (let index = 0; index < 3; index += 1) {
+            dots.appendChild(document.createElement('span'));
+        }
+        message.append(label, dots);
+        conversationDiv.appendChild(message);
+        conversationDiv.scrollTop = conversationDiv.scrollHeight;
+        return message;
+    }
+
     function appendSourcesToTranscript(sources) {
         if (!Array.isArray(sources)) return;
         const validSources = sources.filter((source) =>
@@ -221,14 +370,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function showConversation(firstResponse, text, role, sources = []) {
+    function showConversation(firstResponse, text, role, sources = [], fallback = false) {
         resumeText = text;
         targetRole = role;
         history = [{role: 'assistant', content: firstResponse}];
         transcript = `Career Lens\n${firstResponse}`;
         appendSourcesToTranscript(sources);
         conversationDiv.replaceChildren();
-        addMessage('assistant', firstResponse, sources);
+        addMessage('assistant', firstResponse, sources, fallback);
+        clearInterval(loaderTimer);
         loaderState.classList.add('d-none');
         emptyState.classList.add('d-none');
         resultContainer.classList.remove('d-none');
@@ -272,9 +422,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({role, resume_text: text})
             });
             const data = await readResponse(response);
-            if (!response.ok) throw new Error(data.error || 'Could not review this resume.');
-            showConversation(data.response, data.resume_text, role, data.sources);
+            if (!response.ok && !data.fallback) throw new Error(data.error || 'Could not review this resume.');
+            showConversation(data.response, data.resume_text, role, data.sources, data.fallback);
         } catch (error) {
+            clearInterval(loaderTimer);
             loaderState.classList.add('d-none');
             emptyState.classList.remove('d-none');
             alert(error.message);
@@ -307,9 +458,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: formData
             });
             const data = await readResponse(response);
-            if (!response.ok) throw new Error(data.error || 'Could not review this resume.');
-            showConversation(data.response, data.resume_text, role, data.sources);
+            if (!response.ok && !data.fallback) throw new Error(data.error || 'Could not review this resume.');
+            showConversation(data.response, data.resume_text, role, data.sources, data.fallback);
         } catch (error) {
+            clearInterval(loaderTimer);
             loaderState.classList.add('d-none');
             emptyState.classList.remove('d-none');
             alert(error.message);
@@ -330,6 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chatInput.disabled = true;
         chatSend.disabled = true;
         chatSend.textContent = 'Thinking...';
+        const typingIndicator = addTypingIndicator();
 
         try {
             const response = await fetch('/api/resume-chat', {
@@ -343,12 +496,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
             const data = await readResponse(response);
-            if (!response.ok) throw new Error(data.error || 'Could not send your message.');
+            if (!response.ok && !data.fallback) throw new Error(data.error || 'Could not send your message.');
+            typingIndicator.remove();
             history = [...previousHistory, {role: 'user', content: message}, {role: 'assistant', content: data.response}];
             transcript += `\n\nCareer Lens\n${data.response}`;
             appendSourcesToTranscript(data.sources);
-            addMessage('assistant', data.response, data.sources);
+            addMessage('assistant', data.response, data.sources, data.fallback);
         } catch (error) {
+            typingIndicator.remove();
             addMessage('assistant', `I couldn't send that message. ${error.message}`);
         } finally {
             chatInput.disabled = false;

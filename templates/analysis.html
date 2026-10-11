@@ -3,6 +3,43 @@
 {% block title %}Analysis Results | Career Lens{% endblock %}
 
 {% block head %}
+<style>
+    .ai-feedback-loading {
+        padding: 1.25rem;
+        border: 1px solid rgba(13, 202, 240, 0.2);
+        border-radius: 1rem;
+        background: rgba(13, 202, 240, 0.04);
+    }
+
+    .ai-feedback-skeleton {
+        width: 100%;
+        height: 0.7rem;
+        margin: 0.8rem 0;
+        border-radius: 1rem;
+        background: linear-gradient(90deg, rgba(148, 163, 184, 0.08), rgba(13, 202, 240, 0.28), rgba(148, 163, 184, 0.08));
+        background-size: 200% 100%;
+        animation: ai-feedback-shimmer 1.5s ease-in-out infinite;
+    }
+
+    .ai-feedback-skeleton:nth-of-type(3) { width: 84%; }
+    .ai-feedback-skeleton:nth-of-type(4) { width: 66%; }
+    .ai-feedback-line { line-height: 1.65; animation: ai-feedback-line-in 0.28s ease-out both; }
+
+    @keyframes ai-feedback-shimmer {
+        from { background-position: 100% 0; }
+        to { background-position: -100% 0; }
+    }
+
+    @keyframes ai-feedback-line-in {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .ai-feedback-skeleton,
+        .ai-feedback-line { animation: none; }
+    }
+</style>
 {% endblock %}
 
 {% block body %}
@@ -364,7 +401,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
 <script>
     // Escape resume text for JS
     const rawResumeText = {{ result.parsed.text | tojson }};
@@ -372,7 +408,7 @@
     async function generateAIFeedback() {
         const modal = new bootstrap.Modal(document.getElementById('aiModal'));
         document.getElementById('aiModalLabel').innerHTML = '<i class="bi bi-robot me-2"></i>AI Resume Feedback';
-        document.getElementById('aiModalBody').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Analyzing resume bullet points...</p></div>';
+        document.getElementById('aiModalBody').innerHTML = '<div class="ai-feedback-loading py-4" role="status"><div class="d-flex align-items-center gap-2 text-info fw-semibold"><span class="spinner-grow spinner-grow-sm" aria-hidden="true"></span><span>Reading your resume...</span></div><div class="ai-feedback-skeleton mt-3"></div><div class="ai-feedback-skeleton"></div><div class="ai-feedback-skeleton"></div><small class="text-muted">Preparing focused feedback</small></div>';
         modal.show();
 
         try {
@@ -386,60 +422,71 @@
             });
             
             const data = await res.json();
-            if (!res.ok) {
+            if (!res.ok && !data.fallback) {
                 throw new Error(data.error || 'Failed to generate feedback');
             }
             
-            if (!data.markdown) {
+            if (!data.response) {
                 throw new Error('No feedback received from the server');
             }
             
-            const htmlContent = marked.parse(data.markdown);
             const contentDiv = document.getElementById('aiModalBody');
             contentDiv.innerHTML = '';
-            contentDiv.classList.add('ai-typing');
-            
-            let tokens = [];
-            let temp = "";
-            let inTag = false;
-            
-            for (let i = 0; i < htmlContent.length; i++) {
-                let char = htmlContent[i];
-                if (char === '<') {
-                    if (temp) { tokens.push({type: 'text', content: temp}); temp = ""; }
-                    inTag = true;
-                    temp += char;
-                } else if (char === '>') {
-                    temp += char;
-                    tokens.push({type: 'tag', content: temp});
-                    temp = "";
-                    inTag = false;
-                } else {
-                    temp += char;
-                    if (!inTag && (char === ' ' || char === '\n')) {
-                        tokens.push({type: 'text', content: temp});
-                        temp = "";
-                    }
-                }
+            if (data.fallback) {
+                const notice = document.createElement('div');
+                notice.className = 'alert alert-warning py-2';
+                notice.textContent = 'General guidance — AI is temporarily unavailable, so this is not a resume-specific review.';
+                contentDiv.appendChild(notice);
             }
-            if (temp) tokens.push({type: 'text', content: temp});
-            
-            let i = 0;
-            let currentHTML = "";
-            function type() {
-                if (i < tokens.length) {
-                    currentHTML += tokens[i].content;
-                    contentDiv.innerHTML = currentHTML;
-                    let delay = tokens[i].type === 'tag' ? 0 : 25 + Math.random() * 25;
-                    i++;
-                    setTimeout(type, delay);
-                } else {
-                    contentDiv.classList.remove('ai-typing');
+
+            const responseContent = document.createElement('div');
+            responseContent.className = 'd-flex flex-column gap-2';
+            contentDiv.appendChild(responseContent);
+            const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const lines = data.response.split('\n').flatMap((line) => {
+                if (line.length <= 180) return [line];
+                return (line.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [line])
+                    .map((sentence) => sentence.trim());
+            });
+            if (reducedMotion) {
+                responseContent.textContent = data.response;
+            } else {
+                let lineIndex = 0;
+                function revealNextLine() {
+                    if (lineIndex >= lines.length) return;
+                    const paragraph = document.createElement('div');
+                    paragraph.className = 'ai-feedback-line';
+                    paragraph.textContent = lines[lineIndex].trim() || '\u00a0';
+                    responseContent.appendChild(paragraph);
+                    lineIndex += 1;
+                    if (lineIndex < lines.length) window.setTimeout(revealNextLine, 110);
                 }
+                revealNextLine();
             }
-            type();
+
+            if (Array.isArray(data.sources) && data.sources.length) {
+                const sources = document.createElement('div');
+                sources.className = 'mt-4 pt-3 border-top border-secondary';
+                const title = document.createElement('strong');
+                title.textContent = 'Sources';
+                sources.appendChild(title);
+                data.sources.slice(0, 5).forEach((source) => {
+                    if (!source || typeof source.url !== 'string' || !/^https?:\/\//i.test(source.url)) return;
+                    const link = document.createElement('a');
+                    link.className = 'd-block text-info mt-1';
+                    link.href = source.url;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.textContent = source.title || source.url;
+                    sources.appendChild(link);
+                });
+                if (sources.childElementCount > 1) contentDiv.appendChild(sources);
+            }
         } catch(e) {
-            document.getElementById('aiModalBody').innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i><strong>Error:</strong> ${e.message}</div>`;
+            const errorBox = document.createElement('div');
+            errorBox.className = 'alert alert-danger';
+            errorBox.textContent = `Could not generate feedback: ${e.message}`;
+            document.getElementById('aiModalBody').replaceChildren(errorBox);
         }
     }
 
