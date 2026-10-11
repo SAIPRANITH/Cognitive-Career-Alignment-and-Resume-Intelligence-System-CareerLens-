@@ -7,7 +7,7 @@ Instead of just guessing if your resume is "good enough," Career Lens reads your
 # What it actually does:
 - Resume Parsing: Drop your PDF or DOCX resume in, and it automatically pulls out your skills, education (yep, it supports Indian CGPA and degrees like B.Tech/MCA!), and years of experience.
 - Role Checking: Wondering if you're ready for a Data Scientist role? It'll give you a percentage match score and tell you exactly which skills you're missing.
-- AI Feedback: It uses OpenAI with optional web search to provide readable, role-specific advice on how to improve your resume.
+- AI Feedback: It uses Google Gemini to provide readable, role-specific advice on how to improve your resume.
 - Data Visualizations: Check out the interactive dashboard to see how salaries and experience levels stack up across different industries.
 
 
@@ -43,14 +43,14 @@ pip install -r requirements.txt
 ```
 
 4. Configure AI resume chat
-AI resume reviews and follow-up questions use OpenAI with web search grounding for current career facts and source links. Set an OpenAI API key with available API billing to enable them.
+AI resume reviews and follow-up questions use Google Gemini. Set a Gemini API key from Google AI Studio to enable them. Free-tier model availability and request limits vary by project. This configuration does not use live Google Search grounding.
 
 A. Create a file called `.env` right in the main project folder.
 
 B. Paste your API key in there like this:
 
    ```text
-   OPENAI_API_KEY="your_api_key_here"
+   GEMINI_API_KEY="your_api_key_here"
    ```
 Without a key, the rest of the app remains available, but AI feedback returns a clear setup error instead of presenting template text as AI advice.
 
