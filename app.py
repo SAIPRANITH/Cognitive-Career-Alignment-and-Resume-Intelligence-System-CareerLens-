@@ -443,7 +443,7 @@ def api_generate_feedback():
 
 @app.route('/api/resume-chat', methods=['POST'])
 def api_resume_chat():
-    """Continue a stateless Gemini resume-advice conversation."""
+    """Continue a stateless OpenAI resume-advice conversation."""
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
         return jsonify({'error': 'Invalid JSON payload'}), 400
