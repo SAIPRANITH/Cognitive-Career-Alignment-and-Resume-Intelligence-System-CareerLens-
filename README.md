@@ -42,8 +42,8 @@ Now install everything the app needs to run (Flask, pandas, scikit-learn, etc.):
 pip install -r requirements.txt
 ```
 
-4. Hook up the AI (Optional but recommended)
-To get the smart AI feedback working, you'll need a free Google Gemini API key.
+4. Configure AI resume chat
+AI resume reviews and follow-up questions use Google Gemini. Set a Gemini API key to enable them.
 
 A. Create a file called `.env` right in the main project folder.
 
@@ -52,7 +52,7 @@ B. Paste your API key in there like this:
    ```text
    GEMINI_API_KEY="your_api_key_here"
    ```
-(If you don't add an API key, the app will still work, but it'll just use basic pre-written text instead of the AI.)
+Without a key, the rest of the app remains available, but AI feedback returns a clear setup error instead of presenting template text as AI advice.
 
 5. Fire it up!
 Start the Flask server:
@@ -65,4 +65,4 @@ Once the server says it's running, open your web browser and go to:
 http://127.0.0.1:5000
 
 ---
-Enjoy using Career Lens! Feel free to open issues or contribute if you find any bugs.
+Enjoy using Career Lens!

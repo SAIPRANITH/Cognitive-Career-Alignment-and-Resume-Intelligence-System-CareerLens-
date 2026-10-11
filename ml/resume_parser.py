@@ -111,12 +111,13 @@ SKILL_KEYWORDS = {
 }
 
 EDUCATION_PATTERNS = [
-    r'(?i)(ph\.?d|doctorate)',
-    r'(?i)(master|m\.?s\.?|m\.?tech|m\.?sc|mca|mba|m\.?arch|m\.?des|m\.?com|pgdm)',
-    r'(?i)(bachelor|b\.?s\.?|b\.?tech|b\.?e\.?|b\.?sc|bca|bba|b\.?arch|b\.?des|b\.?com|b\.?a)',
-    r'(?i)(diploma|associate)',
-    r'(?i)(intermediate|12th|hsc|plus two|higher secondary)',
-    r'(?i)(10th|ssc|high school|secondary school|matriculation)'
+    r'(?i)\b(?:ph\.?\s*d|doctorate|doctoral degree)\b',
+    r'(?i)\b(?:master(?:\'s)?(?: degree)?|m\.?\s*(?:tech|sc|ca|ba|com|arch|des)|m\.s|m\.e|mba|pgdm)\b',
+    r'(?i)\b(?:bachelor(?:\'s)?(?: degree)?|b\.?\s*(?:tech|sc|ba|com|arch|des)|bca|bba|b\.e|b\.s)\b',
+    r'(?i)\bdiploma\b',
+    r'(?i)\bassociate(?:\'s)?(?: degree)?\b',
+    r'(?i)\b(?:intermediate|12\s*(?:th|std|standard)|class\s*(?:xii|12)|grade\s*12|hsc|plus two|higher secondary)\b',
+    r'(?i)\b(?:10\s*(?:th|std|standard)|class\s*(?:x|10)|grade\s*10|ssc|high school|secondary school|matriculation)\b'
 ]
 
 # Maps pattern index → Indian standard education label
@@ -124,9 +125,10 @@ EDUCATION_LEVELS = {
     0: 'PhD',
     1: 'MTech',
     2: 'BTech',
-    3: 'BTech',
-    4: 'Intermediate',
-    5: '10th'
+    3: 'Diploma',
+    4: 'Associate',
+    5: 'Intermediate',
+    6: '10th'
 }
 
 CERTIFICATION_KEYWORDS = [
@@ -172,7 +174,7 @@ def extract_education(text):
     for i, pattern in enumerate(EDUCATION_PATTERNS):
         if re.search(pattern, text):
             return EDUCATION_LEVELS.get(i, 'BTech')
-    return 'BTech'
+    return 'Not detected'
 
 
 def extract_experience_years(text):

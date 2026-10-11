@@ -436,23 +436,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ══════════════════════════════════════
-    //  LENIS SMOOTH SCROLLING
-    // ══════════════════════════════════════
-    if (typeof Lenis !== 'undefined') {
-        const lenis = new Lenis({
-            duration: 1.2,
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
-            smooth: true,
-        });
-
-        function raf(time) {
-            lenis.raf(time);
-            requestAnimationFrame(raf);
-        }
-        requestAnimationFrame(raf);
-    }
-
-    // ══════════════════════════════════════
     //  LETTER-BY-LETTER REVEAL (HEADINGS)
     // ══════════════════════════════════════
     document.querySelectorAll('.letter-reveal').forEach(el => {
@@ -628,23 +611,3 @@ document.addEventListener('DOMContentLoaded', () => {
 // ══════════════════════════════════════
 //  CINEMATIC PAGE LOADER (runs outside DOMContentLoaded)
 // ══════════════════════════════════════
-(function() {
-    // Don't show on analysis results page (avoid annoying repeat loads)
-    if (document.querySelector('.cinematic-loader')) return;
-
-    const loader = document.createElement('div');
-    loader.className = 'cinematic-loader';
-    loader.innerHTML = `
-        <div class="loader-ring"></div>
-        <div class="loader-text">Initializing Career Lens</div>
-        <div class="loader-bar"><div class="loader-bar-inner"></div></div>
-    `;
-    document.body.prepend(loader);
-
-    window.addEventListener('load', () => {
-        setTimeout(() => {
-            loader.classList.add('fade-out');
-            setTimeout(() => loader.remove(), 600);
-        }, 1600);
-    });
-})();

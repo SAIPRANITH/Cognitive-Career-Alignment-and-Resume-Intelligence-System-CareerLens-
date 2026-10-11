@@ -12,7 +12,7 @@ from config import (UPLOAD_FOLDER, CHARTS_FOLDER, MODELS_FOLDER,
 from ml.resume_parser import parse_resume
 from ml.visualizations import (plot_role_probabilities, plot_skill_distribution,
                                 plot_salary_estimation)
-from ml.ai_generator import generate_resume_feedback
+from ml.ai_generator import AIProviderError, generate_resume_chat_response
 
 
 app = Flask(__name__)
@@ -411,16 +411,72 @@ def _calculate_role_eligibility(target_role, skills, experience, education, resu
 
 @app.route('/api/generate-feedback', methods=['POST'])
 def api_generate_feedback():
-    """API: Generate AI feedback for resume."""
+    """Start an AI resume-advice conversation."""
     data = request.get_json(silent=True)
-    if not data:
+    if not isinstance(data, dict):
         return jsonify({'error': 'Invalid JSON payload'}), 400
-    resume_text = data.get('resume_text', '')
-    if not resume_text.strip():
+
+    resume_text = data.get('resume_text')
+    if not isinstance(resume_text, str) or not resume_text.strip():
         return jsonify({'error': 'Resume text is required'}), 400
     target_role = data.get('role', 'General')
-    feedback = generate_resume_feedback(resume_text, target_role)
-    return jsonify({'markdown': feedback})
+    if not isinstance(target_role, str) or len(target_role) > 100:
+        return jsonify({'error': 'Invalid target role'}), 400
+    if len(resume_text) > 12000:
+        return jsonify({'error': 'Resume text must be 12,000 characters or less'}), 400
+
+    try:
+        response = generate_resume_chat_response(
+            resume_text,
+            target_role,
+            'Review my resume and give me concise, actionable advice for my target role.'
+        )
+        return jsonify({'response': response, 'resume_text': resume_text})
+    except AIProviderError as e:
+        app.logger.warning('Resume chat unavailable: %s', e)
+        return jsonify({'error': str(e)}), 503
+
+
+@app.route('/api/resume-chat', methods=['POST'])
+def api_resume_chat():
+    """Continue a stateless Gemini resume-advice conversation."""
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({'error': 'Invalid JSON payload'}), 400
+
+    resume_text = data.get('resume_text')
+    message = data.get('message')
+    target_role = data.get('role', 'General')
+    history = data.get('history', [])
+
+    if not isinstance(resume_text, str) or not resume_text.strip():
+        return jsonify({'error': 'Resume text is required'}), 400
+    if len(resume_text) > 12000:
+        return jsonify({'error': 'Resume text must be 12,000 characters or less'}), 400
+    if not isinstance(message, str) or not message.strip() or len(message) > 2000:
+        return jsonify({'error': 'Enter a message of 1 to 2,000 characters'}), 400
+    if not isinstance(target_role, str) or len(target_role) > 100:
+        return jsonify({'error': 'Invalid target role'}), 400
+    if not isinstance(history, list) or len(history) > 12:
+        return jsonify({'error': 'Conversation history is invalid or too long'}), 400
+    if any(
+        not isinstance(turn, dict)
+        or turn.get('role') not in ('user', 'assistant')
+        or not isinstance(turn.get('content'), str)
+        or not turn['content'].strip()
+        or len(turn['content']) > 2000
+        for turn in history
+    ):
+        return jsonify({'error': 'Conversation history contains an invalid message'}), 400
+
+    try:
+        response = generate_resume_chat_response(
+            resume_text, target_role, message.strip(), history
+        )
+        return jsonify({'response': response})
+    except AIProviderError as e:
+        app.logger.warning('Resume chat unavailable: %s', e)
+        return jsonify({'error': str(e)}), 503
 
 
 @app.route('/ai-feedback')
@@ -433,6 +489,8 @@ def ai_feedback_tool():
 def api_generate_feedback_file():
     """API: Generate AI feedback using an uploaded resume file."""
     target_role = request.form.get('role', 'General')
+    if len(target_role) > 100:
+        return jsonify({'error': 'Invalid target role'}), 400
     if 'resume' not in request.files:
         return jsonify({'error': 'No resume file uploaded'}), 400
         
@@ -443,32 +501,37 @@ def api_generate_feedback_file():
     if not allowed_file(file.filename):
         return jsonify({'error': 'Invalid file type. Upload PDF or DOCX'}), 400
         
-    filename = secure_filename(file.filename)
+    filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    file.save(filepath)
-    
+
     try:
+        file.save(filepath)
         parsed = parse_resume(filepath)
         if not parsed:
             return jsonify({'error': 'Could not extract text from resume'}), 400
         resume_text = parsed.get('text', '')
-        if not resume_text.strip():
-            # Fallback to skills_flat if full text extraction failed
-            resume_text = parsed.get('skills_flat', '')
-            
-        if not resume_text.strip():
+        if not isinstance(resume_text, str) or not resume_text.strip():
             return jsonify({'error': 'Could not extract text from the resume'}), 400
-            
-        feedback = generate_resume_feedback(resume_text, target_role)
-        return jsonify({'markdown': feedback})
+        if len(resume_text) > 12000:
+            return jsonify({'error': 'Resume text must be 12,000 characters or less'}), 400
+        feedback = generate_resume_chat_response(
+            resume_text,
+            target_role,
+            'Review my resume and give me concise, actionable advice for my target role.'
+        )
+        return jsonify({'response': feedback, 'resume_text': resume_text})
+    except AIProviderError as e:
+        app.logger.warning('Resume chat unavailable: %s', e)
+        return jsonify({'error': str(e)}), 503
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        app.logger.exception('Resume upload review failed')
+        return jsonify({'error': 'The uploaded resume could not be reviewed. Please try again.'}), 500
     finally:
         if os.path.exists(filepath):
             try:
                 os.remove(filepath)
-            except Exception:
-                pass
+            except OSError:
+                app.logger.exception('Could not remove temporary resume upload: %s', filepath)
 
 
 

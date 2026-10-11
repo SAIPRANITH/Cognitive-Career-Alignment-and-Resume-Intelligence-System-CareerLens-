@@ -110,24 +110,29 @@
                         <div class="float-element mb-3">
                             <i class="bi bi-robot" style="font-size: 3.5rem; color: #0dcaf0;"></i>
                         </div>
-                        <p class="fw-semibold">Provide your resume details to generate AI feedback.</p>
-                        <small class="text-muted">AI will scan and suggest optimizations for your bullet points and ATS metrics</small>
+                        <p class="fw-semibold">Share your resume to get clear, role-specific feedback.</p>
+                        <small class="text-muted">Start with a resume review, then ask follow-up questions.</small>
                     </div>
 
                     <!-- Loader State -->
                     <div id="fbLoaderState" class="d-none d-flex flex-column align-items-center justify-content-center my-auto py-5">
                         <div class="spinner-border text-info mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
-                        <p class="fw-semibold text-info animate-pulse mb-1">AI is reviewing your resume...</p>
-                        <small class="text-muted text-center">Calculating ATS impact scores and formatting metrics</small>
+                        <p class="fw-semibold text-info mb-1">Reviewing your resume...</p>
+                        <small class="text-muted text-center">This may take a few seconds.</small>
                     </div>
 
                     <!-- Result Content -->
                     <div id="fbResultContainer" class="d-none">
-                        <div class="p-4 rounded-4 border border-secondary border-opacity-25 bg-dark bg-opacity-40 shadow-inner" style="max-height: 60vh; overflow-y: auto;">
-                            <div id="fbContent" class="markdown-body text-body text-start">
-                                <!-- Markdown content injected here -->
-                            </div>
+                        <div id="fbConversation" class="d-flex flex-column gap-3 p-4 rounded-4 border border-secondary border-opacity-25 bg-dark bg-opacity-40 shadow-inner" style="max-height: 60vh; overflow-y: auto;" aria-live="polite" aria-label="Resume feedback conversation">
                         </div>
+                        <form id="feedbackChatForm" class="d-none mt-3">
+                            <label for="feedbackChatMessage" class="visually-hidden">Ask a follow-up question</label>
+                            <div class="input-group">
+                                <textarea id="feedbackChatMessage" class="form-control border-secondary border-opacity-50 text-body bg-transparent" rows="2" maxlength="2000" placeholder="Ask a follow-up about your resume..." required></textarea>
+                                <button id="feedbackChatSend" class="btn btn-info px-4 fw-bold" type="submit">Send</button>
+                            </div>
+                            <small class="text-muted">Your resume stays attached to this conversation. Messages are not saved after you leave.</small>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -137,196 +142,207 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const manualForm = document.getElementById('feedbackManualForm');
     const fileForm = document.getElementById('feedbackFileForm');
-    
     const emptyState = document.getElementById('fbEmptyState');
     const loaderState = document.getElementById('fbLoaderState');
     const resultContainer = document.getElementById('fbResultContainer');
     const actionsBar = document.getElementById('fbActions');
-    const contentDiv = document.getElementById('fbContent');
-    
-    let generatedMarkdown = "";
+    const conversationDiv = document.getElementById('fbConversation');
+    const chatForm = document.getElementById('feedbackChatForm');
+    const chatInput = document.getElementById('feedbackChatMessage');
+    const chatSend = document.getElementById('feedbackChatSend');
+    const copyButton = document.getElementById('btnCopyFb');
+    const downloadButton = document.getElementById('btnDownloadFb');
+
+    let resumeText = '';
+    let targetRole = 'General';
+    let history = [];
+    let transcript = '';
 
     function showLoading() {
         emptyState.classList.add('d-none');
         resultContainer.classList.add('d-none');
         actionsBar.classList.add('d-none');
+        chatForm.classList.add('d-none');
         loaderState.classList.remove('d-none');
     }
 
-    function hideLoading() {
-        loaderState.classList.add('d-none');
+    function addMessage(role, text) {
+        const message = document.createElement('div');
+        message.className = role === 'assistant'
+            ? 'align-self-start rounded-4 px-3 py-2 bg-secondary bg-opacity-25'
+            : 'align-self-end rounded-4 px-3 py-2 bg-info bg-opacity-25';
+        message.style.maxWidth = '90%';
+        message.style.whiteSpace = 'pre-wrap';
+
+        const label = document.createElement('strong');
+        label.className = 'd-block small text-info mb-1';
+        label.textContent = role === 'assistant' ? 'Career Lens' : 'You';
+        const content = document.createElement('div');
+        content.textContent = text;
+        message.append(label, content);
+        conversationDiv.appendChild(message);
+        conversationDiv.scrollTop = conversationDiv.scrollHeight;
     }
 
-    function renderFeedback(markdown) {
-        generatedMarkdown = markdown;
-        const htmlContent = marked.parse(markdown);
-        
+    function showConversation(firstResponse, text, role) {
+        resumeText = text;
+        targetRole = role;
+        history = [{role: 'assistant', content: firstResponse}];
+        transcript = `Career Lens\n${firstResponse}`;
+        conversationDiv.replaceChildren();
+        addMessage('assistant', firstResponse);
+        loaderState.classList.add('d-none');
+        emptyState.classList.add('d-none');
         resultContainer.classList.remove('d-none');
+        chatForm.classList.remove('d-none');
         actionsBar.classList.remove('d-none');
         actionsBar.classList.add('d-flex');
-        
-        // Trigger subtle animation
-        resultContainer.style.animation = 'fadeInUp 0.6s ease-out';
-        
-        // Word-by-word AI typing effect
-        contentDiv.innerHTML = '';
-        contentDiv.classList.add('ai-typing');
-        let tokens = [];
-        let temp = "";
-        let inTag = false;
-        
-        for (let i = 0; i < htmlContent.length; i++) {
-            let char = htmlContent[i];
-            if (char === '<') {
-                if (temp) { tokens.push({type: 'text', content: temp}); temp = ""; }
-                inTag = true;
-                temp += char;
-            } else if (char === '>') {
-                temp += char;
-                tokens.push({type: 'tag', content: temp});
-                temp = "";
-                inTag = false;
-            } else {
-                temp += char;
-                if (!inTag && (char === ' ' || char === '\n')) {
-                    tokens.push({type: 'text', content: temp});
-                    temp = "";
-                }
-            }
-        }
-        if (temp) tokens.push({type: 'text', content: temp});
-        
-        let i = 0;
-        let currentHTML = "";
-        function type() {
-            if (i < tokens.length) {
-                currentHTML += tokens[i].content;
-                contentDiv.innerHTML = currentHTML;
-                let delay = tokens[i].type === 'tag' ? 0 : 25 + Math.random() * 25;
-                i++;
-                setTimeout(type, delay);
-            } else {
-                contentDiv.classList.remove('ai-typing');
-            }
-        }
-        type();
+        chatInput.focus();
     }
 
-    // Manual Form Submission
-    manualForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        showLoading();
-        
-        const btn = document.getElementById('btnGenFeedbackManual');
-        const originalText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Reviewing...';
+    async function readResponse(response) {
+        try {
+            return await response.json();
+        } catch {
+            throw new Error('The server returned an unreadable response. Please try again.');
+        }
+    }
 
-        const payload = {
-            role: document.getElementById('targetRoleStr').value,
-            resume_text: document.getElementById('resumeTextFb').value
-        };
+    function setBusy(button, busy, busyText, originalContent) {
+        button.disabled = busy;
+        if (busy) {
+            button.textContent = busyText;
+        } else {
+            button.innerHTML = originalContent;
+        }
+    }
+
+    manualForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        history = [];
+        showLoading();
+        const button = document.getElementById('btnGenFeedbackManual');
+        const originalContent = button.innerHTML;
+        setBusy(button, true, 'Reviewing...', originalContent);
+        const text = document.getElementById('resumeTextFb').value.trim();
+        const role = document.getElementById('targetRoleStr').value;
 
         try {
             const response = await fetch('/api/generate-feedback', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
+                body: JSON.stringify({role, resume_text: text})
             });
-            
-            const data = await response.json();
-            hideLoading();
-            
-            if (response.ok && data.markdown) {
-                renderFeedback(data.markdown);
-            } else {
-                throw new Error(data.error || 'Server returned an error');
-            }
-        } catch (err) {
-            hideLoading();
+            const data = await readResponse(response);
+            if (!response.ok) throw new Error(data.error || 'Could not review this resume.');
+            showConversation(data.response, data.resume_text, role);
+        } catch (error) {
+            loaderState.classList.add('d-none');
             emptyState.classList.remove('d-none');
-            alert("Error generating feedback: " + err.message);
+            alert(error.message);
         } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
+            setBusy(button, false, '', originalContent);
         }
     });
 
-    // File Upload Form Submission
-    fileForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    fileForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const fileInput = document.getElementById('resumeFile');
+        if (!fileInput.files.length) {
+            alert('Choose a PDF or DOCX resume first.');
+            return;
+        }
+        history = [];
         showLoading();
-        
-        const btn = document.getElementById('btnGenFeedbackFile');
-        const originalText = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Reading File...';
+        const button = document.getElementById('btnGenFeedbackFile');
+        const originalContent = button.innerHTML;
+        const role = document.getElementById('targetRoleFile').value;
+        setBusy(button, true, 'Reviewing...', originalContent);
 
         const formData = new FormData();
-        formData.append('role', document.getElementById('targetRoleFile').value);
-        formData.append('resume', document.getElementById('resumeFile').files[0]);
+        formData.append('role', role);
+        formData.append('resume', fileInput.files[0]);
 
         try {
             const response = await fetch('/api/generate-feedback-file', {
                 method: 'POST',
                 body: formData
             });
-            
-            const data = await response.json();
-            hideLoading();
-            
-            if (response.ok && data.markdown) {
-                renderFeedback(data.markdown);
-            } else {
-                throw new Error(data.error || 'Server returned an error');
-            }
-        } catch (err) {
-            hideLoading();
+            const data = await readResponse(response);
+            if (!response.ok) throw new Error(data.error || 'Could not review this resume.');
+            showConversation(data.response, data.resume_text, role);
+        } catch (error) {
+            loaderState.classList.add('d-none');
             emptyState.classList.remove('d-none');
-            alert("Error analyzing file: " + err.message);
+            alert(error.message);
         } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
+            setBusy(button, false, '', originalContent);
         }
     });
 
-    // Actions: Copy to Clipboard
-    document.getElementById('btnCopyFb').addEventListener('click', () => {
-        if (!generatedMarkdown) return;
-        
-        navigator.clipboard.writeText(generatedMarkdown).then(() => {
-            const copyBtn = document.getElementById('btnCopyFb');
-            copyBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Copied!';
-            copyBtn.classList.remove('btn-outline-info');
-            copyBtn.classList.add('btn-success');
-            setTimeout(() => {
-                copyBtn.innerHTML = '<i class="bi bi-clipboard me-1"></i> Copy';
-                copyBtn.classList.remove('btn-success');
-                copyBtn.classList.add('btn-outline-info');
-            }, 2000);
-        }).catch(err => {
-            alert('Failed to copy text: ' + err);
-        });
+    chatForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const message = chatInput.value.trim();
+        if (!message || !resumeText || chatSend.disabled) return;
+
+        const previousHistory = history.slice();
+        addMessage('user', message);
+        transcript += `\n\nYou\n${message}`;
+        chatInput.value = '';
+        chatInput.disabled = true;
+        chatSend.disabled = true;
+        chatSend.textContent = 'Thinking...';
+
+        try {
+            const response = await fetch('/api/resume-chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    resume_text: resumeText,
+                    role: targetRole,
+                    message,
+                    history: history.slice(-10)
+                })
+            });
+            const data = await readResponse(response);
+            if (!response.ok) throw new Error(data.error || 'Could not send your message.');
+            history = [...previousHistory, {role: 'user', content: message}, {role: 'assistant', content: data.response}];
+            transcript += `\n\nCareer Lens\n${data.response}`;
+            addMessage('assistant', data.response);
+        } catch (error) {
+            addMessage('assistant', `I couldn't send that message. ${error.message}`);
+        } finally {
+            chatInput.disabled = false;
+            chatSend.disabled = false;
+            chatSend.textContent = 'Send';
+            chatInput.focus();
+        }
     });
 
-    // Actions: Download as File
-    document.getElementById('btnDownloadFb').addEventListener('click', () => {
-        if (!generatedMarkdown) return;
-        
-        const blob = new Blob([generatedMarkdown], { type: 'text/markdown' });
+    copyButton.addEventListener('click', async () => {
+        if (!transcript) return;
+        try {
+            await navigator.clipboard.writeText(transcript);
+        } catch {
+            alert('Clipboard access was denied by the browser.');
+        }
+    });
+
+    downloadButton.addEventListener('click', () => {
+        if (!transcript) return;
+        const blob = new Blob([transcript], {type: 'text/plain;charset=utf-8'});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `resume_ai_feedback.md`;
+        a.download = 'career-lens-resume-chat.txt';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        setTimeout(() => URL.revokeObjectURL(url), 0);
     });
 });
 </script>
