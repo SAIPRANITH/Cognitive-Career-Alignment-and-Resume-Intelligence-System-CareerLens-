@@ -426,12 +426,16 @@ def api_generate_feedback():
         return jsonify({'error': 'Resume text must be 12,000 characters or less'}), 400
 
     try:
-        response = generate_resume_chat_response(
+        response, sources = generate_resume_chat_response(
             resume_text,
             target_role,
             'Review my resume and give me concise, actionable advice for my target role.'
         )
-        return jsonify({'response': response, 'resume_text': resume_text})
+        return jsonify({
+            'response': response,
+            'resume_text': resume_text,
+            'sources': sources,
+        })
     except AIProviderError as e:
         app.logger.warning('Resume chat unavailable: %s', e)
         return jsonify({'error': str(e)}), 503
@@ -476,10 +480,10 @@ def api_resume_chat():
             return jsonify({'error': 'Conversation history is too long'}), 400
 
     try:
-        response = generate_resume_chat_response(
+        response, sources = generate_resume_chat_response(
             resume_text, target_role, message.strip(), history
         )
-        return jsonify({'response': response})
+        return jsonify({'response': response, 'sources': sources})
     except AIProviderError as e:
         app.logger.warning('Resume chat unavailable: %s', e)
         return jsonify({'error': str(e)}), 503
@@ -520,12 +524,16 @@ def api_generate_feedback_file():
             return jsonify({'error': 'Could not extract text from the resume'}), 400
         if len(resume_text) > 12000:
             return jsonify({'error': 'Resume text must be 12,000 characters or less'}), 400
-        feedback = generate_resume_chat_response(
+        feedback, sources = generate_resume_chat_response(
             resume_text,
             target_role,
             'Review my resume and give me concise, actionable advice for my target role.'
         )
-        return jsonify({'response': feedback, 'resume_text': resume_text})
+        return jsonify({
+            'response': feedback,
+            'resume_text': resume_text,
+            'sources': sources,
+        })
     except AIProviderError as e:
         app.logger.warning('Resume chat unavailable: %s', e)
         return jsonify({'error': str(e)}), 503

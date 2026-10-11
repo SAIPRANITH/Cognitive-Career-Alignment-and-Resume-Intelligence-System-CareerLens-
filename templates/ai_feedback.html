@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loaderState.classList.remove('d-none');
     }
 
-    function addMessage(role, text) {
+    function addMessage(role, text, sources = []) {
         const message = document.createElement('div');
         message.className = role === 'assistant'
             ? 'align-self-start rounded-4 px-3 py-2 bg-secondary bg-opacity-25'
@@ -184,17 +184,51 @@ document.addEventListener('DOMContentLoaded', () => {
         const content = document.createElement('div');
         content.textContent = text;
         message.append(label, content);
+
+        if (role === 'assistant' && Array.isArray(sources) && sources.length) {
+            const sourceList = document.createElement('div');
+            sourceList.className = 'mt-2 small';
+            const sourceLabel = document.createElement('strong');
+            sourceLabel.textContent = 'Sources';
+            sourceList.appendChild(sourceLabel);
+
+            sources.slice(0, 5).forEach((source) => {
+                if (!source || typeof source.url !== 'string' || !/^https?:\/\//i.test(source.url)) return;
+                const link = document.createElement('a');
+                link.className = 'd-block text-info';
+                link.href = source.url;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.textContent = source.title || source.url;
+                sourceList.appendChild(link);
+            });
+            if (sourceList.childElementCount > 1) message.appendChild(sourceList);
+        }
+
         conversationDiv.appendChild(message);
         conversationDiv.scrollTop = conversationDiv.scrollHeight;
     }
 
-    function showConversation(firstResponse, text, role) {
+    function appendSourcesToTranscript(sources) {
+        if (!Array.isArray(sources)) return;
+        const validSources = sources.filter((source) =>
+            source && typeof source.url === 'string' && /^https?:\/\//i.test(source.url)
+        ).slice(0, 5);
+        if (validSources.length) {
+            transcript += '\n\nSources:\n' + validSources
+                .map((source) => `- ${source.title || source.url}: ${source.url}`)
+                .join('\n');
+        }
+    }
+
+    function showConversation(firstResponse, text, role, sources = []) {
         resumeText = text;
         targetRole = role;
         history = [{role: 'assistant', content: firstResponse}];
         transcript = `Career Lens\n${firstResponse}`;
+        appendSourcesToTranscript(sources);
         conversationDiv.replaceChildren();
-        addMessage('assistant', firstResponse);
+        addMessage('assistant', firstResponse, sources);
         loaderState.classList.add('d-none');
         emptyState.classList.add('d-none');
         resultContainer.classList.remove('d-none');
@@ -239,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await readResponse(response);
             if (!response.ok) throw new Error(data.error || 'Could not review this resume.');
-            showConversation(data.response, data.resume_text, role);
+            showConversation(data.response, data.resume_text, role, data.sources);
         } catch (error) {
             loaderState.classList.add('d-none');
             emptyState.classList.remove('d-none');
@@ -274,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await readResponse(response);
             if (!response.ok) throw new Error(data.error || 'Could not review this resume.');
-            showConversation(data.response, data.resume_text, role);
+            showConversation(data.response, data.resume_text, role, data.sources);
         } catch (error) {
             loaderState.classList.add('d-none');
             emptyState.classList.remove('d-none');
@@ -312,7 +346,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(data.error || 'Could not send your message.');
             history = [...previousHistory, {role: 'user', content: message}, {role: 'assistant', content: data.response}];
             transcript += `\n\nCareer Lens\n${data.response}`;
-            addMessage('assistant', data.response);
+            appendSourcesToTranscript(data.sources);
+            addMessage('assistant', data.response, data.sources);
         } catch (error) {
             addMessage('assistant', `I couldn't send that message. ${error.message}`);
         } finally {

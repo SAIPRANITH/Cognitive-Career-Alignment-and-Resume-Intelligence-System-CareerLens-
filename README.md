@@ -43,7 +43,7 @@ pip install -r requirements.txt
 ```
 
 4. Configure AI resume chat
-AI resume reviews and follow-up questions use Google Gemini. Set a Gemini API key to enable them.
+AI resume reviews and follow-up questions use Google Gemini with Google Search grounding for current career facts and source links. Set a Gemini API key from a Google AI project with available quota to enable them.
 
 A. Create a file called `.env` right in the main project folder.
 
