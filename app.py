@@ -459,15 +459,21 @@ def api_resume_chat():
         return jsonify({'error': 'Invalid target role'}), 400
     if not isinstance(history, list) or len(history) > 12:
         return jsonify({'error': 'Conversation history is invalid or too long'}), 400
-    if any(
-        not isinstance(turn, dict)
-        or turn.get('role') not in ('user', 'assistant')
-        or not isinstance(turn.get('content'), str)
-        or not turn['content'].strip()
-        or len(turn['content']) > 2000
-        for turn in history
-    ):
-        return jsonify({'error': 'Conversation history contains an invalid message'}), 400
+    history_size = 0
+    for turn in history:
+        if (
+            not isinstance(turn, dict)
+            or turn.get('role') not in ('user', 'assistant')
+            or not isinstance(turn.get('content'), str)
+            or not turn['content'].strip()
+        ):
+            return jsonify({'error': 'Conversation history contains an invalid message'}), 400
+        max_message_length = 2000 if turn['role'] == 'user' else 8000
+        if len(turn['content']) > max_message_length:
+            return jsonify({'error': 'A conversation message is too long'}), 400
+        history_size += len(turn['content'])
+        if history_size > 16000:
+            return jsonify({'error': 'Conversation history is too long'}), 400
 
     try:
         response = generate_resume_chat_response(
