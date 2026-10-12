@@ -1,6 +1,7 @@
 
 import re
 import os
+from datetime import date
 
 
 def extract_text_from_pdf(file_path):
@@ -148,18 +149,7 @@ def extract_skills(text):
     for category, keywords in SKILL_KEYWORDS.items():
         matched = []
         for skill in keywords:
-            # Escape the skill string, but handle c++ or c# specially since + and # are non-word chars
-            skill_escaped = re.escape(skill.lower())
-            
-            # If the skill ends in non-word char (like c++), don't enforce trailing word boundary
-            if not skill[-1].isalnum():
-                pattern = r'\b' + skill_escaped
-            # If the skill starts with non-word char (like .net), don't enforce leading word boundary
-            elif not skill[0].isalnum():
-                pattern = skill_escaped + r'\b'
-            else:
-                pattern = r'\b' + skill_escaped + r'\b'
-                
+            pattern = r'(?<!\w)' + re.escape(skill.lower()) + r'(?!\w)'
             if re.search(pattern, text_lower):
                 matched.append(skill.title() if len(skill) > 2 else skill.upper())
         
@@ -190,7 +180,86 @@ def extract_experience_years(text):
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
             return int(match.group(1))
-    return 0
+
+    lines = text.splitlines()
+    section_headers = re.compile(
+        r'^\s*(?:(?:professional\s+)?(?:work\s+)?experience|'
+        r'employment\s+history|work\s+history)\s*:?\s*$',
+        re.IGNORECASE,
+    )
+    other_headers = re.compile(
+        r'^\s*(?:education|skills|projects|certifications|summary|'
+        r'objective|achievements|awards|references|employment\s+history|'
+        r'work\s+history)\s*:?\s*$',
+        re.IGNORECASE,
+    )
+    experience_lines = []
+    in_experience = False
+    for line in lines:
+        if section_headers.match(line):
+            in_experience = True
+            continue
+        if in_experience and other_headers.match(line):
+            break
+        if in_experience:
+            experience_lines.append(line)
+
+    months = {
+        name.lower(): number
+        for number, names in enumerate(
+            (
+                ('jan', 'january'), ('feb', 'february'), ('mar', 'march'),
+                ('apr', 'april'), ('may',), ('jun', 'june'), ('jul', 'july'),
+                ('aug', 'august'), ('sep', 'sept', 'september'),
+                ('oct', 'october'), ('nov', 'november'), ('dec', 'december'),
+            ),
+            start=1,
+        )
+        for name in names
+    }
+    date_pattern = re.compile(
+        r'(?i)\b(?:'
+        r'(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|'
+        r'jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|'
+        r'oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+)?'
+        r'(20\d{2}|19\d{2})\s*(?:[-–—]|to)\s*'
+        r'(?:(present|current|now)|(?:'
+        r'(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|'
+        r'jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|'
+        r'oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+)?'
+        r'(20\d{2}|19\d{2}))\b'
+    )
+    intervals = []
+    current_month = date.today().year * 12 + date.today().month - 1
+    for line in experience_lines:
+        for match in date_pattern.finditer(line):
+            start_month_name, start_year, end_period, end_month_name, end_year = match.groups()
+            start = int(start_year) * 12
+            if start_month_name:
+                start += months[start_month_name.strip().lower()] - 1
+            if end_period and end_period.lower() in ('present', 'current', 'now'):
+                end = current_month
+            else:
+                end = int(end_year) * 12 + 11
+                if end_month_name:
+                    end = int(end_year) * 12 + months[end_month_name.strip().lower()] - 1
+            if end >= start:
+                intervals.append((start, end))
+
+    if not intervals:
+        return 0
+
+    intervals.sort()
+    total_months = 0
+    range_start, range_end = intervals[0]
+    for start, end in intervals[1:]:
+        if start <= range_end + 1:
+            range_end = max(range_end, end)
+        else:
+            total_months += range_end - range_start + 1
+            range_start, range_end = start, end
+    total_months += range_end - range_start + 1
+    return total_months // 12
 
 
 def extract_gpa(text):
@@ -249,16 +318,53 @@ def extract_certifications(text):
 
 
 def extract_projects_count(text):
-    """Estimate project count from text."""
-    text_lower = text.lower()
-    project_markers = [
-        r'project\s*\d', r'project\s*:', r'project\s*title',
-        r'•\s*\w+', r'►\s*\w+', r'▪\s*\w+'
-    ]
-    count = 0
-    for pattern in project_markers:
-        count += len(re.findall(pattern, text_lower))
-    return max(count, 1)
+    """Count project entries in a project section, not generic resume bullets."""
+    lines = text.splitlines()
+    section_headers = re.compile(
+        r'^\s*(?:academic\s+|personal\s+)?projects?(?:\s+(?:and|&)\s+'
+        r'(?:research|publications))?\s*:?\s*$',
+        re.IGNORECASE,
+    )
+    other_headers = re.compile(
+        r'^\s*(?:education|skills|experience|work\s+experience|'
+        r'professional\s+experience|certifications|summary|objective|'
+        r'achievements|awards|references)\s*:?\s*$',
+        re.IGNORECASE,
+    )
+    entries = 0
+    in_projects = False
+    for line in lines:
+        stripped = line.strip()
+        if section_headers.match(stripped):
+            in_projects = True
+            continue
+        if in_projects and other_headers.match(stripped):
+            break
+        if not in_projects or not stripped:
+            continue
+
+        is_bullet = bool(re.match(r'^(?:[-*•▪►]|\d+[.)])\s+\S', stripped))
+        title = re.sub(r'^(?:[-*•▪►]|\d+[.)])\s+', '', stripped)
+        starts_with_action = bool(re.match(
+            r'(?i)^(?:built|created|designed|developed|implemented|'
+            r'integrated|managed|optimized|used|utilized|leveraged|'
+            r'collaborated|worked|responsible)\b',
+            title,
+        ))
+        is_title = bool(
+            re.search(r'\b(?:project\s*\d*|application|app|system|platform|'
+                      r'website|dashboard|model|tool|portfolio|'
+                      r'machine\s+learning|data\s+analysis)\b',
+                      title, re.IGNORECASE)
+        )
+        title_length = len(title.split())
+        if is_title and not starts_with_action and (
+            (is_bullet and title_length <= 12)
+            or (not is_bullet and title_length <= 12 and not title.endswith('.'))
+        ):
+            entries += 1
+
+    return entries
 
 
 def parse_resume(file_path):
@@ -269,7 +375,9 @@ def parse_resume(file_path):
         return None
 
     skills = extract_skills(text)
-    all_skills = [s for cat_skills in skills.values() for s in cat_skills]
+    all_skills = list(dict.fromkeys(
+        skill for category_skills in skills.values() for skill in category_skills
+    ))
 
     return {
         'text': text,

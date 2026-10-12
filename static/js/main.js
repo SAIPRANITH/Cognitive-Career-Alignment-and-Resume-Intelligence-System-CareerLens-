@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ══════════════════════════════════════
     //  PROGRESS BAR ANIMATION
     // ══════════════════════════════════════
-    const progressBars = document.querySelectorAll('.progress-bar');
+    const progressBars = document.querySelectorAll('.progress-bar:not(#resBar)');
     const progressObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {

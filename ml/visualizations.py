@@ -80,23 +80,20 @@ def plot_skill_distribution(skills_dict, filename='skill_distribution.png'):
     return filename
 
 
-def plot_salary_estimation(min_sal, median_sal, max_sal, predicted_sal,
+def plot_salary_estimation(min_sal, max_sal, predicted_sal,
                            filename='salary_estimation.png'):
-    """Salary range visualization."""
+    """Plot an indicative salary estimate within its illustrative range."""
     ensure_charts_dir()
     fig, ax = plt.subplots(figsize=(9, 5))
 
     ax.barh(['Estimated Salary'], [max_sal - min_sal], left=[min_sal],
-            color='#0d6efd', edgecolor='#0d6efd', linewidth=1, height=0.3, alpha=0.2, label='Market Range')
+            color='#0d6efd', edgecolor='#0d6efd', linewidth=1, height=0.3, alpha=0.2, label='Illustrative Range')
     
     ax.barh(['Estimated Salary'], [0.5], left=[predicted_sal - 0.25],
             color='#00e5ff', height=0.5, label=f'Your Estimate: {predicted_sal:.1f} LPA')
             
-    ax.axvline(x=median_sal, color='#ffc107', linewidth=2, linestyle='--',
-               label=f'Market Median: {median_sal:.1f} LPA')
-
     ax.set_xlabel('Salary (LPA)', fontsize=13)
-    ax.set_title('Salary Estimation & Market Alignment', fontsize=18, fontweight='bold', pad=20)
+    ax.set_title('Indicative Salary Estimate', fontsize=18, fontweight='bold', pad=20)
     
     ax.legend(fontsize=11, loc='upper right', frameon=True, facecolor='#060b14', edgecolor='#333366', framealpha=0.8)
     
