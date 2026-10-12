@@ -7,6 +7,7 @@ from ml.resume_parser import (
     extract_projects_count,
     parse_resume,
 )
+from ml.salary_model import estimate_salary
 
 
 class ResumeParserFeatureTests(unittest.TestCase):
@@ -59,6 +60,17 @@ BTech'''
 
         self.assertEqual(extract_projects_count(resume), 0)
         self.assertEqual(extract_experience_years(resume), 0)
+
+
+class SalaryEstimateTests(unittest.TestCase):
+    def test_salary_estimate_uses_existing_factors_and_cluster_multiplier(self):
+        self.assertEqual(estimate_salary(2, 5, 20, 'Intermediate'), 27.9)
+
+    def test_salary_estimate_keeps_existing_feature_caps(self):
+        self.assertEqual(estimate_salary(4, 20, 40, 'Senior'), 75.6)
+
+    def test_unknown_cluster_keeps_unadjusted_existing_estimate(self):
+        self.assertEqual(estimate_salary(2, 5, 20, 'Unclassified'), 21.5)
 
 
 if __name__ == '__main__':

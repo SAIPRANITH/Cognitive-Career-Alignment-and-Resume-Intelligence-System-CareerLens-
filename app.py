@@ -10,6 +10,7 @@ import joblib
 from config import (UPLOAD_FOLDER, CHARTS_FOLDER, MODELS_FOLDER,
                     DATASETS_FOLDER, ALLOWED_EXTENSIONS, JOB_CATEGORIES, SKILLS_MAP)
 from ml.resume_parser import parse_resume
+from ml.salary_model import estimate_salary
 from ml.visualizations import (plot_role_probabilities, plot_skill_distribution,
                                 plot_salary_estimation)
 from ml.ai_generator import AIProviderError, generate_resume_chat_response
@@ -110,6 +111,7 @@ def upload_resume():
 
     edu_map = {'10th': 0, 'Intermediate': 1, 'BTech': 2, 'MTech': 3, 'PhD': 4}
     resume_data = {
+        'education_encoded': edu_map.get(parsed['education_level'], 1),
         'cert_count': len([c for c in parsed['certifications'] if c != 'None']),
     }
     
@@ -199,16 +201,15 @@ def upload_resume():
     
     score = int(skill_pts + exp_pts + proj_pts + cert_pts + edu_pts)
 
-    education_premium = {
-        'PhD': 1.5,
-        'MTech': 1.0,
-        'BTech': 0.5,
-    }.get(parsed['education_level'], 0.0)
-    capped_exp = min(parsed['years_of_experience'], 12)
-    pred_salary = round(4.0 + capped_exp * 0.75 + education_premium, 1)
+    pred_salary = estimate_salary(
+        resume_data['education_encoded'],
+        parsed['years_of_experience'],
+        parsed['skill_count'],
+        cluster_label,
+    )
 
-    max_market = max(15.0, pred_salary + 4.0)
-    plot_salary_estimation(3.0, max_market, pred_salary, 'user_salary.png')
+    max_market = max(35.0, pred_salary + 5.0)
+    plot_salary_estimation(3.0, 12.0, max_market, pred_salary, 'user_salary.png')
 
 
     result = {
